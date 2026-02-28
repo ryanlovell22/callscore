@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Upload Recording — CallScore{% endblock %}
+
+{% block content %}
+<h2>Upload Recording</h2>
+
+<article style="max-width: 600px;">
+    <p>Upload a call recording to have it transcribed and classified.</p>
+    <form method="post" enctype="multipart/form-data">
+        <label for="tracking_line_id">Tracking Line (optional)</label>
+        <select id="tracking_line_id" name="tracking_line_id">
+            <option value="">None</option>
+            {% for line in lines %}
+            <option value="{{ line.id }}">{{ line.label or line.twilio_phone_number }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="audio_file">Audio File</label>
+        <input type="file" id="audio_file" name="audio_file" accept=".wav,.mp3,.m4a,.ogg,.mp4" required>
+        <small>Supported formats: WAV, MP3, M4A, OGG, MP4 (max 25MB)</small>
+
+        <button type="submit">Upload &amp; Analyse</button>
+    </form>
+</article>
+{% endblock %}

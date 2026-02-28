@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}CallScore{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="container">
+        <nav>
+            <ul>
+                <li><strong><a href="{{ url_for('dashboard.index') }}">CallScore</a></strong></li>
+            </ul>
+            {% if current_user.is_authenticated %}
+            <ul>
+                <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('lines.index') }}">Tracking Lines</a></li>
+                <li><a href="{{ url_for('upload.index') }}">Upload</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Log out</a></li>
+            </ul>
+            {% else %}
+            <ul>
+                <li><a href="{{ url_for('auth.login') }}">Log in</a></li>
+                <li><a href="{{ url_for('auth.signup') }}">Sign up</a></li>
+            </ul>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <article {% if category == 'error' %}class="flash-error"{% endif %}>
+            {{ message }}
+        </article>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="container">
+        <small>CallScore &copy; {{ now().year if now is defined else 2026 }}</small>
+    </footer>
+</body>
+</html>

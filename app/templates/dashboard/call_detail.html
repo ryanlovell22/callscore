@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Call Detail — CallScore{% endblock %}
+
+{% block content %}
+<h2>Call Detail</h2>
+
+<a href="{{ url_for('dashboard.index') }}">&larr; Back to dashboard</a>
+
+<div class="grid" style="margin-top: 1rem;">
+    <article>
+        <h4>Call Info</h4>
+        <table>
+            <tr><td><strong>Date</strong></td><td>{{ call.call_date.strftime('%d %b %Y %H:%M') if call.call_date else '—' }}</td></tr>
+            <tr><td><strong>Caller</strong></td><td>{{ call.caller_number or '—' }}</td></tr>
+            <tr><td><strong>Duration</strong></td><td>{{ '%d:%02d'|format(call.call_duration // 60, call.call_duration % 60) if call.call_duration else '—' }}</td></tr>
+            <tr><td><strong>Tracking Line</strong></td><td>{{ call.tracking_line.label if call.tracking_line else '—' }}</td></tr>
+            <tr><td><strong>Source</strong></td><td>{{ call.source }}</td></tr>
+        </table>
+    </article>
+
+    <article>
+        <h4>AI Analysis</h4>
+        {% if call.status == 'completed' %}
+        <table>
+            <tr>
+                <td><strong>Classification</strong></td>
+                <td>
+                    {% if call.classification == 'JOB_BOOKED' %}
+                        <mark style="background: #d4edda; color: #155724;">Booked</mark>
+                    {% elif call.classification == 'NOT_BOOKED' %}
+                        <mark style="background: #f8d7da; color: #721c24;">Not Booked</mark>
+                    {% else %}
+                        {{ call.classification or '—' }}
+                    {% endif %}
+                </td>
+            </tr>
+            {% if call.confidence %}
+            <tr><td><strong>Confidence</strong></td><td>{{ "%.0f"|format(call.confidence * 100) }}%</td></tr>
+            {% endif %}
+            <tr><td><strong>Summary</strong></td><td>{{ call.summary or '—' }}</td></tr>
+            <tr><td><strong>Service Type</strong></td><td>{{ call.service_type or '—' }}</td></tr>
+            <tr><td><strong>Urgent</strong></td><td>{{ 'Yes' if call.urgent else 'No' }}</td></tr>
+        </table>
+
+        <!-- Manual Override -->
+        <h5>Override Classification</h5>
+        <form method="post" action="{{ url_for('dashboard.override_classification', call_id=call.id) }}">
+            <fieldset role="group">
+                <select name="classification">
+                    <option value="JOB_BOOKED" {% if call.classification == 'JOB_BOOKED' %}selected{% endif %}>Booked</option>
+                    <option value="NOT_BOOKED" {% if call.classification == 'NOT_BOOKED' %}selected{% endif %}>Not Booked</option>
+                </select>
+                <button type="submit">Update</button>
+            </fieldset>
+        </form>
+        {% elif call.status == 'processing' %}
+        <p>Analysis in progress...</p>
+        {% elif call.status == 'failed' %}
+        <p>Analysis failed.</p>
+        {% else %}
+        <p>Pending analysis.</p>
+        {% endif %}
+    </article>
+</div>
+
+{% if call.full_transcript %}
+<article>
+    <h4>Transcript</h4>
+    <pre style="white-space: pre-wrap; font-size: 0.9rem;">{{ call.full_transcript }}</pre>
+</article>
+{% endif %}
+
+{% if call.recording_url %}
+<article>
+    <h4>Recording</h4>
+    <audio controls>
+        <source src="{{ call.recording_url }}.mp3" type="audio/mpeg">
+        Your browser does not support audio playback.
+    </audio>
+</article>
+{% endif %}
+{% endblock %}

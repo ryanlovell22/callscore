@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — CallScore{% endblock %}
+
+{% block content %}
+<h2>Dashboard</h2>
+
+<!-- Stats Bar -->
+<div class="grid">
+    <article>
+        <h3>{{ stats.total }}</h3>
+        <p>Total Calls</p>
+    </article>
+    <article>
+        <h3 style="color: var(--pico-color-green-500, green);">{{ stats.booked }}</h3>
+        <p>Booked</p>
+    </article>
+    <article>
+        <h3 style="color: var(--pico-color-red-500, red);">{{ stats.not_booked }}</h3>
+        <p>Not Booked</p>
+    </article>
+    <article>
+        <h3>{{ stats.rate }}%</h3>
+        <p>Conversion</p>
+    </article>
+    <article>
+        <h3>${{ "%.2f"|format(stats.total_value) }}</h3>
+        <p>Lead Value</p>
+    </article>
+</div>
+
+<!-- Filters -->
+<details>
+    <summary>Filters</summary>
+    <form method="get" class="grid">
+        <label>
+            Tracking Line
+            <select name="line">
+                <option value="">All lines</option>
+                {% for line in lines %}
+                <option value="{{ line.id }}" {% if filters.line == line.id %}selected{% endif %}>
+                    {{ line.label or line.twilio_phone_number }}
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Classification
+            <select name="classification">
+                <option value="">All</option>
+                <option value="JOB_BOOKED" {% if filters.classification == 'JOB_BOOKED' %}selected{% endif %}>Booked</option>
+                <option value="NOT_BOOKED" {% if filters.classification == 'NOT_BOOKED' %}selected{% endif %}>Not Booked</option>
+            </select>
+        </label>
+        <label>
+            From
+            <input type="date" name="date_from" value="{{ filters.date_from }}">
+        </label>
+        <label>
+            To
+            <input type="date" name="date_to" value="{{ filters.date_to }}">
+        </label>
+        <div>
+            <button type="submit">Apply</button>
+            <a href="{{ url_for('dashboard.index') }}" role="button" class="outline">Clear</a>
+        </div>
+    </form>
+</details>
+
+<!-- Calls Table -->
+{% if calls %}
+<figure>
+    <table role="grid">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Line</th>
+                <th>Caller</th>
+                <th>Duration</th>
+                <th>Status</th>
+                <th>Summary</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for call in calls %}
+            <tr>
+                <td>{{ call.call_date.strftime('%d %b %Y %H:%M') if call.call_date else '—' }}</td>
+                <td>{{ call.tracking_line.label if call.tracking_line else '—' }}</td>
+                <td>{{ call.caller_number or '—' }}</td>
+                <td>{{ '%d:%02d'|format(call.call_duration // 60, call.call_duration % 60) if call.call_duration else '—' }}</td>
+                <td>
+                    {% if call.classification == 'JOB_BOOKED' %}
+                        <mark style="background: var(--pico-color-green-100, #d4edda); color: var(--pico-color-green-700, #155724);">Booked</mark>
+                    {% elif call.classification == 'NOT_BOOKED' %}
+                        <mark style="background: var(--pico-color-red-100, #f8d7da); color: var(--pico-color-red-700, #721c24);">Not Booked</mark>
+                    {% elif call.status == 'processing' %}
+                        <mark style="background: var(--pico-color-yellow-100, #fff3cd); color: var(--pico-color-yellow-700, #856404);">Processing</mark>
+                    {% elif call.status == 'failed' %}
+                        <mark style="background: var(--pico-color-red-100, #f8d7da); color: var(--pico-color-red-700, #721c24);">Failed</mark>
+                    {% else %}
+                        <mark>Pending</mark>
+                    {% endif %}
+                </td>
+                <td>{{ call.summary[:80] + '...' if call.summary and call.summary|length > 80 else call.summary or '—' }}</td>
+                <td><a href="{{ url_for('dashboard.call_detail', call_id=call.id) }}">View</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</figure>
+{% else %}
+<article>
+    <p>No calls found. {% if not lines %}Start by <a href="{{ url_for('lines.add') }}">adding a tracking line</a>.{% endif %}</p>
+</article>
+{% endif %}
+{% endblock %}

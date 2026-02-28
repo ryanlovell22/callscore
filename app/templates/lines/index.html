@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Tracking Lines — CallScore{% endblock %}
+
+{% block content %}
+<h2>Tracking Lines</h2>
+
+<a href="{{ url_for('lines.add') }}" role="button">Add Line</a>
+
+{% if lines %}
+<figure>
+    <table role="grid">
+        <thead>
+            <tr>
+                <th>Label</th>
+                <th>Phone Number</th>
+                <th>Partner</th>
+                <th>Cost/Lead</th>
+                <th>Active</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in lines %}
+            <tr>
+                <td>{{ line.label or '—' }}</td>
+                <td>{{ line.twilio_phone_number or '—' }}</td>
+                <td>{{ line.partner_name or '—' }}</td>
+                <td>${{ "%.2f"|format(line.cost_per_lead) if line.cost_per_lead else '0.00' }}</td>
+                <td>{{ 'Yes' if line.active else 'No' }}</td>
+                <td>
+                    <a href="{{ url_for('lines.edit', line_id=line.id) }}">Edit</a>
+                    <form method="post" action="{{ url_for('lines.delete', line_id=line.id) }}" style="display:inline;">
+                        <button type="submit" class="outline secondary" onclick="return confirm('Delete this line?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</figure>
+{% else %}
+<article>
+    <p>No tracking lines yet. Add one to start receiving calls.</p>
+</article>
+{% endif %}
+{% endblock %}
