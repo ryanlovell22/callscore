@@ -23,6 +23,42 @@ class Account(UserMixin, db.Model):
 
     tracking_lines = db.relationship("TrackingLine", backref="account", lazy=True)
     calls = db.relationship("Call", backref="account", lazy=True)
+    partners = db.relationship("Partner", backref="account", lazy=True)
+
+    @property
+    def user_type(self):
+        return "account"
+
+    def get_id(self):
+        return f"account:{self.id}"
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password, method="pbkdf2:sha256")
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+
+class Partner(UserMixin, db.Model):
+    __tablename__ = "partners"
+
+    id = db.Column(db.Integer, primary_key=True)
+    account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(
+        db.DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+
+    tracking_lines = db.relationship("TrackingLine", backref="partner", lazy=True)
+
+    @property
+    def user_type(self):
+        return "partner"
+
+    def get_id(self):
+        return f"partner:{self.id}"
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password, method="pbkdf2:sha256")
@@ -36,6 +72,7 @@ class TrackingLine(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"), nullable=False)
+    partner_id = db.Column(db.Integer, db.ForeignKey("partners.id"), nullable=True)
     twilio_phone_number = db.Column(db.String(20))
     label = db.Column(db.String(255))
     partner_name = db.Column(db.String(255))

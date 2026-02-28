@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Partners — CallScore{% endblock %}
+
+{% block content %}
+<h2>Partners</h2>
+
+<a href="{{ url_for('partners.add') }}" role="button">Add Partner</a>
+
+{% if partners %}
+<figure>
+    <table role="grid">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Assigned Lines</th>
+                <th>Created</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for partner in partners %}
+            <tr>
+                <td>{{ partner.name }}</td>
+                <td>{{ partner.email }}</td>
+                <td>{{ partner.tracking_lines | length }}</td>
+                <td>{{ partner.created_at.strftime('%d %b %Y') if partner.created_at else '—' }}</td>
+                <td>
+                    <form method="post" action="{{ url_for('partners.delete', partner_id=partner.id) }}" style="display:inline;">
+                        <button type="submit" class="outline secondary" onclick="return confirm('Delete this partner? Their tracking lines will be unassigned.')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</figure>
+{% else %}
+<article>
+    <p>No partners yet. Add one to give them view-only access to their call data.</p>
+</article>
+{% endif %}
+{% endblock %}

@@ -42,6 +42,7 @@
             <tr><td><strong>Urgent</strong></td><td>{{ 'Yes' if call.urgent else 'No' }}</td></tr>
         </table>
 
+        {% if current_user.user_type == 'account' %}
         <!-- Manual Override -->
         <h5>Override Classification</h5>
         <form method="post" action="{{ url_for('dashboard.override_classification', call_id=call.id) }}">
@@ -53,6 +54,7 @@
                 <button type="submit">Update</button>
             </fieldset>
         </form>
+        {% endif %}
         {% elif call.status == 'processing' %}
         <p>Analysis in progress...</p>
         {% elif call.status == 'failed' %}

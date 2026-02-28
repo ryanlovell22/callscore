@@ -1,7 +1,7 @@
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, current_user
 
-from ..models import db, Account
+from ..models import db, Account, Partner
 from . import bp
 
 
@@ -14,9 +14,13 @@ def login():
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
 
-        account = Account.query.filter_by(email=email).first()
-        if account and account.check_password(password):
-            login_user(account)
+        # Check Account table first, then Partner
+        user = Account.query.filter_by(email=email).first()
+        if not user:
+            user = Partner.query.filter_by(email=email).first()
+
+        if user and user.check_password(password):
+            login_user(user)
             next_page = request.args.get("next")
             return redirect(next_page or url_for("dashboard.index"))
 

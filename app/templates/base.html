@@ -16,8 +16,11 @@
             {% if current_user.is_authenticated %}
             <ul>
                 <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+                {% if current_user.user_type == 'account' %}
                 <li><a href="{{ url_for('lines.index') }}">Tracking Lines</a></li>
+                <li><a href="{{ url_for('partners.index') }}">Partners</a></li>
                 <li><a href="{{ url_for('upload.index') }}">Upload</a></li>
+                {% endif %}
                 <li><a href="{{ url_for('auth.logout') }}">Log out</a></li>
             </ul>
             {% else %}

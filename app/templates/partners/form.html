@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Add Partner — CallScore{% endblock %}
+
+{% block content %}
+<h2>Add Partner</h2>
+
+<article style="max-width: 600px;">
+    <form method="post">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" placeholder="e.g. Dan Smith" required>
+
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="dan@example.com" required>
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Min 8 characters" required minlength="8">
+
+        <button type="submit">Create Partner</button>
+        <a href="{{ url_for('partners.index') }}" role="button" class="outline">Cancel</a>
+    </form>
+</article>
+{% endblock %}

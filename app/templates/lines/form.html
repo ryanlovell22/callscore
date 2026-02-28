@@ -25,6 +25,14 @@
         <input type="number" id="cost_per_lead" name="cost_per_lead" step="0.01" min="0"
                value="{{ line.cost_per_lead if line else '50.00' }}">
 
+        <label for="partner_id">Assigned Partner</label>
+        <select id="partner_id" name="partner_id">
+            <option value="">— None —</option>
+            {% for p in partners %}
+            <option value="{{ p.id }}" {% if line and line.partner_id == p.id %}selected{% endif %}>{{ p.name }} ({{ p.email }})</option>
+            {% endfor %}
+        </select>
+
         {% if line %}
         <label>
             <input type="checkbox" name="active" {% if line.active %}checked{% endif %}>

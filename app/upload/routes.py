@@ -22,6 +22,9 @@ def allowed_file(filename):
 @bp.route("/", methods=["GET", "POST"])
 @login_required
 def index():
+    if current_user.user_type != "account":
+        from flask import abort
+        abort(403)
     if request.method == "POST":
         file = request.files.get("audio_file")
         if not file or not file.filename:

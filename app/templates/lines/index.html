@@ -14,6 +14,7 @@
                 <th>Label</th>
                 <th>Phone Number</th>
                 <th>Partner</th>
+                <th>Assigned Login</th>
                 <th>Cost/Lead</th>
                 <th>Active</th>
                 <th></th>
@@ -25,6 +26,7 @@
                 <td>{{ line.label or '—' }}</td>
                 <td>{{ line.twilio_phone_number or '—' }}</td>
                 <td>{{ line.partner_name or '—' }}</td>
+                <td>{{ line.partner.name if line.partner else '—' }}</td>
                 <td>${{ "%.2f"|format(line.cost_per_lead) if line.cost_per_lead else '0.00' }}</td>
                 <td>{{ 'Yes' if line.active else 'No' }}</td>
                 <td>

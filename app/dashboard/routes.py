@@ -17,7 +17,17 @@ def index():
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
 
-    query = Call.query.filter_by(account_id=current_user.id)
+    # Partners see only their assigned lines; accounts see everything
+    if current_user.user_type == "partner":
+        account_id = current_user.account_id
+        partner_line_ids = [l.id for l in current_user.tracking_lines]
+        query = Call.query.filter(
+            Call.account_id == account_id,
+            Call.tracking_line_id.in_(partner_line_ids)
+        )
+    else:
+        account_id = current_user.id
+        query = Call.query.filter_by(account_id=account_id)
 
     if line_id:
         query = query.filter_by(tracking_line_id=line_id)
@@ -37,9 +47,13 @@ def index():
             pass
 
     calls = query.order_by(Call.call_date.desc()).all()
-    lines = TrackingLine.query.filter_by(
-        account_id=current_user.id, active=True
-    ).all()
+
+    if current_user.user_type == "partner":
+        lines = [l for l in current_user.tracking_lines if l.active]
+    else:
+        lines = TrackingLine.query.filter_by(
+            account_id=current_user.id, active=True
+        ).all()
 
     # Stats
     total = len(calls)
@@ -78,15 +92,28 @@ def index():
 @bp.route("/calls/<int:call_id>")
 @login_required
 def call_detail(call_id):
-    call = Call.query.filter_by(
-        id=call_id, account_id=current_user.id
-    ).first_or_404()
+    if current_user.user_type == "partner":
+        partner_line_ids = [l.id for l in current_user.tracking_lines]
+        call = Call.query.filter(
+            Call.id == call_id,
+            Call.account_id == current_user.account_id,
+            Call.tracking_line_id.in_(partner_line_ids)
+        ).first_or_404()
+    else:
+        call = Call.query.filter_by(
+            id=call_id, account_id=current_user.id
+        ).first_or_404()
     return render_template("dashboard/call_detail.html", call=call)
 
 
 @bp.route("/calls/<int:call_id>/override", methods=["POST"])
 @login_required
 def override_classification(call_id):
+    # Partners cannot override classifications
+    if current_user.user_type == "partner":
+        flash("You don't have permission to do that.", "error")
+        return redirect(url_for("dashboard.index"))
+
     call = Call.query.filter_by(
         id=call_id, account_id=current_user.id
     ).first_or_404()

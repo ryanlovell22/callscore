@@ -17,13 +17,14 @@ callscore/
 ├── app/
 │   ├── __init__.py          # Flask app factory
 │   ├── config.py            # Config from env vars
-│   ├── models.py            # SQLAlchemy models (Account, TrackingLine, Call, Invoice)
+│   ├── models.py            # SQLAlchemy models (Account, Partner, TrackingLine, Call, Invoice)
 │   ├── twilio_service.py    # Twilio API helpers
-│   ├── auth/routes.py       # Login, signup, logout
+│   ├── auth/routes.py       # Login, signup, logout (checks both Account + Partner)
 │   ├── dashboard/routes.py  # Main dashboard, call detail, filters, override
-│   ├── lines/routes.py      # CRUD for tracking lines
+│   ├── lines/routes.py      # CRUD for tracking lines (account-only)
+│   ├── partners/routes.py   # CRUD for partner logins (account-only)
 │   ├── webhooks/routes.py   # Twilio CI webhook receiver
-│   ├── upload/routes.py     # Manual audio file upload
+│   ├── upload/routes.py     # Manual audio file upload (account-only)
 │   ├── templates/           # Jinja2 templates
 │   └── static/style.css     # Minimal custom CSS
 ├── scripts/
@@ -43,7 +44,9 @@ callscore/
 
 ## Database
 - Multi-tenant from day one (account_id on all tables)
-- Models: Account, TrackingLine, Call, Invoice
+- Models: Account, Partner, TrackingLine, Call, Invoice
+- Partners are view-only users linked to an Account. TrackingLine has nullable `partner_id` FK.
+- Flask-Login uses prefixed IDs (`account:1`, `partner:1`) to distinguish user types.
 - Connection via DATABASE_URL env var (Supabase PostgreSQL)
 
 ## Current Status
