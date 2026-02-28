@@ -70,4 +70,5 @@ def twilio_ci_callback():
         logger.exception("Error processing webhook for transcript %s", transcript_sid)
         call.status = "failed"
         db.session.commit()
-        return jsonify({"error": str(e)}), 500
+        # Return 200 so Twilio doesn't retry endlessly
+        return jsonify({"error": str(e)}), 200
