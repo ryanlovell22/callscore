@@ -232,9 +232,11 @@ def fetch_operator_results(account_sid, auth_token, transcript_sid):
 
     # Get the first (and likely only) operator result
     result = results[0]
-    extracted = result.get("extract_results", {})
 
-    # The extracted data should match our JSON schema
+    # GenerativeJSON operators return results in json_results,
+    # while other types use extract_results
+    extracted = result.get("json_results") or result.get("extract_results") or {}
+
     if isinstance(extracted, str):
         try:
             extracted = json.loads(extracted)
