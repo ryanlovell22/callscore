@@ -261,14 +261,21 @@ def fetch_transcript_text(account_sid, auth_token, transcript_sid):
     url = f"{TWILIO_CI_BASE}/Transcripts/{transcript_sid}/Sentences"
     auth = get_auth(account_sid, auth_token)
 
-    resp = requests.get(url, auth=auth, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
+    all_sentences = []
+    while url:
+        resp = requests.get(url, auth=auth, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+        all_sentences.extend(data.get("sentences", []))
 
-    sentences = data.get("sentences", [])
+        next_page = data.get("meta", {}).get("next_page_url")
+        url = next_page if next_page else None
+
     lines = []
-    for s in sentences:
-        speaker = s.get("media_channel", {}).get("role", "Unknown")
+    for s in all_sentences:
+        # media_channel is an integer: 1 = caller, 2 = business
+        channel = s.get("media_channel", 0)
+        speaker = "Customer" if channel == 1 else "Business"
         text = s.get("transcript", "")
         lines.append(f"{speaker}: {text}")
 
