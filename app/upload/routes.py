@@ -99,6 +99,10 @@ def index():
         os.makedirs(upload_dir, exist_ok=True)
         line_id = request.form.get("tracking_line_id", type=int)
         base_url = request.host_url.rstrip("/")
+        # Railway terminates SSL at the proxy, so Flask sees http://.
+        # Twilio CI won't follow 301 redirects, so force https in prod.
+        if base_url.startswith("http://") and "localhost" not in base_url and "127.0.0.1" not in base_url:
+            base_url = base_url.replace("http://", "https://", 1)
 
         file_tasks = []
         skipped = 0
