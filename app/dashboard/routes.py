@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
-from flask import render_template, request, redirect, url_for, flash, jsonify
+import requests as http_requests
+from flask import render_template, request, redirect, url_for, flash, jsonify, Response
 from flask_login import login_required, current_user
 
-from ..models import db, Call, TrackingLine
+from ..models import db, Call, TrackingLine, Account
 from . import bp
 
 
@@ -131,3 +132,41 @@ def override_classification(call_id):
         flash("Classification updated.", "success")
 
     return redirect(url_for("dashboard.call_detail", call_id=call.id))
+
+
+@bp.route("/calls/<int:call_id>/recording")
+@login_required
+def call_recording(call_id):
+    """Proxy the Twilio recording so users don't need Twilio credentials."""
+    if current_user.user_type == "partner":
+        partner_line_ids = [l.id for l in current_user.tracking_lines]
+        call = Call.query.filter(
+            Call.id == call_id,
+            Call.account_id == current_user.account_id,
+            Call.tracking_line_id.in_(partner_line_ids)
+        ).first_or_404()
+        account = db.session.get(Account, current_user.account_id)
+    else:
+        call = Call.query.filter_by(
+            id=call_id, account_id=current_user.id
+        ).first_or_404()
+        account = db.session.get(Account, current_user.id)
+
+    if not call.recording_url or not account:
+        return "Recording not available", 404
+
+    resp = http_requests.get(
+        f"{call.recording_url}.mp3",
+        auth=(account.twilio_account_sid, account.twilio_auth_token_encrypted),
+        stream=True,
+        timeout=30,
+    )
+
+    if resp.status_code != 200:
+        return "Recording not available", 404
+
+    return Response(
+        resp.iter_content(chunk_size=8192),
+        content_type="audio/mpeg",
+        headers={"Content-Disposition": "inline"},
+    )

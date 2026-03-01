@@ -91,7 +91,7 @@
 <article>
     <h4>Recording</h4>
     <audio controls>
-        <source src="{{ call.recording_url }}.mp3" type="audio/mpeg">
+        <source src="{{ url_for('dashboard.call_recording', call_id=call.id) }}" type="audio/mpeg">
         Your browser does not support audio playback.
     </audio>
 </article>
