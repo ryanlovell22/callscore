@@ -49,7 +49,27 @@
     {% endif %}
 </article>
 
-<!-- 2. Timezone -->
+<!-- 2. Sync Calls -->
+{% if connected %}
+<article style="max-width: 600px;">
+    <h3>Sync Twilio Calls</h3>
+    <p>Pull historical calls from Twilio. Only calls matching your tracking lines will be imported.</p>
+    <form method="post" action="{{ url_for('settings.sync_calls') }}">
+        <label for="sync_days">Lookback Period</label>
+        <select id="sync_days" name="sync_days">
+            <option value="1" selected>Last 24 hours</option>
+            <option value="3">Last 3 days</option>
+            <option value="7">Last 7 days</option>
+            <option value="14">Last 14 days</option>
+            <option value="30">Last 30 days</option>
+        </select>
+        <button type="submit">Sync Now</button>
+    </form>
+    <small>A 24-hour sync runs automatically when you first connect Twilio. Use this to re-sync or extend the lookback period.</small>
+</article>
+{% endif %}
+
+<!-- 3. Timezone -->
 <article style="max-width: 600px;">
     <h3>Timezone</h3>
     <form method="post" action="{{ url_for('settings.save_timezone') }}">
@@ -63,7 +83,7 @@
     </form>
 </article>
 
-<!-- 3. Upload Recording -->
+<!-- 4. Upload Recording -->
 <article style="max-width: 600px;">
     <h3>Upload Recordings</h3>
     <p>Upload one or more call recordings to have them transcribed and classified.</p>
@@ -84,7 +104,7 @@
     </form>
 </article>
 
-<!-- 4. Billing -->
+<!-- 5. Billing -->
 <article style="max-width: 600px;">
     <h3>Billing</h3>
 
@@ -153,7 +173,7 @@
 </article>
 {% endif %}
 
-<!-- 5. Shared Proof Links -->
+<!-- 6. Shared Proof Links -->
 <article style="max-width: 700px;">
     <h3>Shared Proof Links</h3>
 

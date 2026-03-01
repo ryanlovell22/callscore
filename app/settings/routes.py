@@ -1,7 +1,8 @@
 import logging
+import threading
 from functools import wraps
 
-from flask import render_template, request, redirect, url_for, flash, abort
+from flask import render_template, request, redirect, url_for, flash, abort, current_app
 from flask_login import login_required, current_user
 
 from ..models import db
@@ -11,6 +12,7 @@ from ..twilio_service import (
     create_ci_operator,
 )
 from ..callrail_service import validate_callrail_credentials, fetch_callrail_accounts
+from ..poll_service import run_full_sync
 from . import bp
 
 logger = logging.getLogger(__name__)
@@ -24,6 +26,21 @@ def account_required(f):
             abort(403)
         return f(*args, **kwargs)
     return decorated
+
+
+def _spawn_backfill(account_id, days=7):
+    """Run a full Twilio sync in a background thread."""
+    from ..models import Account
+    app = current_app._get_current_object()
+
+    def _run():
+        with app.app_context():
+            account = db.session.get(Account, account_id)
+            if account:
+                run_full_sync(account, days=days)
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
 
 
 @bp.route("/", methods=["GET", "POST"])
@@ -69,8 +86,14 @@ def index():
                 account.twilio_service_sid = service_sid
                 create_ci_operator(sid, token, service_sid)
                 db.session.commit()
+
+                # Auto-backfill last 24 hours of calls in background
+                _spawn_backfill(account.id, days=1)
+
                 flash(
-                    "Twilio connected and call analysis enabled.", "success"
+                    "Twilio connected and call analysis enabled. "
+                    "Syncing your last 24 hours of calls in the background.",
+                    "success",
                 )
             except Exception:
                 db.session.rollback()
@@ -204,4 +227,32 @@ def save_timezone():
         flash("Timezone updated.", "success")
     else:
         flash("Invalid timezone.", "error")
+    return redirect(url_for("settings.index"))
+
+
+@bp.route("/sync", methods=["POST"])
+@login_required
+@account_required
+def sync_calls():
+    """Manually trigger a Twilio call sync."""
+    account = current_user
+
+    if not account.twilio_account_sid or not account.twilio_auth_token_encrypted:
+        flash("Please connect Twilio first.", "error")
+        return redirect(url_for("settings.index"))
+
+    if not account.twilio_service_sid:
+        flash("Twilio CI is not configured. Please reconnect Twilio.", "error")
+        return redirect(url_for("settings.index"))
+
+    days = request.form.get("sync_days", 1, type=int)
+    days = min(max(days, 1), 30)  # Clamp between 1 and 30
+
+    _spawn_backfill(account.id, days=days)
+
+    flash(
+        f"Syncing your last {days} day{'s' if days != 1 else ''} of Twilio calls in the background. "
+        "Refresh the dashboard in a minute to see results.",
+        "success",
+    )
     return redirect(url_for("settings.index"))
