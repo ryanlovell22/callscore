@@ -24,15 +24,14 @@ def index():
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
 
-    # Default to current week (Monday-Sunday) if no date filters provided
+    # Default to current week (Monday through today) if no date filters provided
     today = datetime.now(timezone.utc).date()
     monday = today - timedelta(days=today.weekday())  # weekday() 0=Mon
-    sunday = monday + timedelta(days=6)
 
     if not date_from:
         date_from = monday.strftime("%Y-%m-%d")
     if not date_to:
-        date_to = sunday.strftime("%Y-%m-%d")
+        date_to = today.strftime("%Y-%m-%d")
 
     # Partners see only their assigned lines; accounts see everything
     if current_user.user_type == "partner":
@@ -105,12 +104,15 @@ def index():
     # Build date range label
     is_default_week = (
         date_from == monday.strftime("%Y-%m-%d")
-        and date_to == sunday.strftime("%Y-%m-%d")
+        and date_to == today.strftime("%Y-%m-%d")
     )
     if is_default_week:
-        week_label = "This week: {} - {}".format(
-            monday.strftime("%-d %b"), sunday.strftime("%-d %b %Y")
-        )
+        if monday == today:
+            week_label = "Today: {}".format(today.strftime("%-d %b %Y"))
+        else:
+            week_label = "This week: {} - {}".format(
+                monday.strftime("%-d %b"), today.strftime("%-d %b %Y")
+            )
     else:
         week_label = "{} - {}".format(date_from, date_to)
 
@@ -228,14 +230,13 @@ def export_csv():
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
 
-    # Default to current week
+    # Default to current week (Monday through today)
     today = datetime.now(timezone.utc).date()
     monday = today - timedelta(days=today.weekday())
-    sunday = monday + timedelta(days=6)
     if not date_from:
         date_from = monday.strftime("%Y-%m-%d")
     if not date_to:
-        date_to = sunday.strftime("%Y-%m-%d")
+        date_to = today.strftime("%Y-%m-%d")
 
     # Build query (same logic as index)
     if current_user.user_type == "partner":
