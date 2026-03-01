@@ -18,6 +18,16 @@ def index():
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
 
+    # Default to current week (Monday–Sunday) if no date filters provided
+    today = datetime.now(timezone.utc).date()
+    monday = today - timedelta(days=today.weekday())  # weekday() 0=Mon
+    sunday = monday + timedelta(days=6)
+
+    if not date_from:
+        date_from = monday.strftime("%Y-%m-%d")
+    if not date_to:
+        date_to = sunday.strftime("%Y-%m-%d")
+
     # Partners see only their assigned lines; accounts see everything
     if current_user.user_type == "partner":
         account_id = current_user.account_id
@@ -35,18 +45,16 @@ def index():
         query = query.filter_by(tracking_line_id=line_id)
     if classification and classification in ("JOB_BOOKED", "NOT_BOOKED"):
         query = query.filter_by(classification=classification)
-    if date_from:
-        try:
-            dt_from = datetime.strptime(date_from, "%Y-%m-%d")
-            query = query.filter(Call.call_date >= dt_from)
-        except ValueError:
-            pass
-    if date_to:
-        try:
-            dt_to = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1)
-            query = query.filter(Call.call_date < dt_to)
-        except ValueError:
-            pass
+    try:
+        dt_from = datetime.strptime(date_from, "%Y-%m-%d")
+        query = query.filter(Call.call_date >= dt_from)
+    except ValueError:
+        pass
+    try:
+        dt_to = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1)
+        query = query.filter(Call.call_date < dt_to)
+    except ValueError:
+        pass
 
     # Missed calls count (respects same filters)
     missed = query.filter(Call.call_outcome == "missed").count()
@@ -74,10 +82,23 @@ def index():
         if c.classification == "JOB_BOOKED" and c.tracking_line:
             total_value += c.tracking_line.cost_per_lead or Decimal("0")
 
+    # Build date range label
+    is_default_week = (
+        date_from == monday.strftime("%Y-%m-%d")
+        and date_to == sunday.strftime("%Y-%m-%d")
+    )
+    if is_default_week:
+        week_label = "This week: {} – {}".format(
+            monday.strftime("%-d %b"), sunday.strftime("%-d %b %Y")
+        )
+    else:
+        week_label = "{} – {}".format(date_from, date_to)
+
     return render_template(
         "dashboard/index.html",
         calls=calls,
         lines=lines,
+        week_label=week_label,
         stats={
             "total": total,
             "booked": booked,
