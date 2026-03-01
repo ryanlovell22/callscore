@@ -37,6 +37,7 @@ def create_app():
     from .webhooks import bp as webhooks_bp
     from .upload import bp as upload_bp
     from .partners import bp as partners_bp
+    from .settings import bp as settings_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -44,5 +45,6 @@ def create_app():
     app.register_blueprint(webhooks_bp)
     app.register_blueprint(upload_bp)
     app.register_blueprint(partners_bp)
+    app.register_blueprint(settings_bp)
 
     return app

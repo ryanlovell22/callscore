@@ -16,6 +16,24 @@ def get_auth(account_sid, auth_token):
     return HTTPBasicAuth(account_sid, auth_token)
 
 
+# --- Credential Validation ---
+
+
+def validate_twilio_credentials(account_sid, auth_token):
+    """Test Twilio credentials by fetching the account info.
+
+    Returns True if valid, False otherwise.
+    """
+    url = f"{TWILIO_API_BASE}/Accounts/{account_sid}.json"
+    try:
+        resp = requests.get(
+            url, auth=get_auth(account_sid, auth_token), timeout=10
+        )
+        return resp.status_code == 200
+    except requests.RequestException:
+        return False
+
+
 # --- Recording Fetch ---
 
 

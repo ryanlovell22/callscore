@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Settings — CallScore{% endblock %}
+
+{% block content %}
+<h2>Settings</h2>
+
+<article style="max-width: 600px;">
+    <h3>Twilio Credentials</h3>
+    <form method="post">
+        <label for="twilio_account_sid">Account SID</label>
+        <input type="text" id="twilio_account_sid" name="twilio_account_sid"
+               value="{{ account_sid }}" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" required>
+
+        <label for="twilio_auth_token">Auth Token</label>
+        <input type="password" id="twilio_auth_token" name="twilio_auth_token"
+               value="{{ masked_token }}" placeholder="Enter your Auth Token">
+
+        <button type="submit">Save</button>
+    </form>
+</article>
+
+{% if connected or account_sid %}
+<article style="max-width: 600px;">
+    <h3>Connection Status</h3>
+    {% if connected %}
+    <p><mark>Connected</mark></p>
+    <p><strong>Webhook URL:</strong></p>
+    <code>{{ webhook_url }}</code>
+    {% else %}
+    <p style="color: var(--pico-muted-color);">Not Connected</p>
+    {% endif %}
+</article>
+{% endif %}
+{% endblock %}
