@@ -122,6 +122,18 @@ def index():
     import pytz
     australian_timezones = [tz for tz in sorted(pytz.all_timezones) if tz.startswith('Australia/')]
 
+    # Data for Upload section
+    from ..models import TrackingLine, Partner, SharedDashboard
+    lines = TrackingLine.query.filter_by(
+        account_id=account.id, active=True
+    ).all()
+
+    # Data for Shared Links section
+    partners = Partner.query.filter_by(account_id=account.id).all()
+    dashboards = SharedDashboard.query.filter_by(
+        account_id=account.id
+    ).order_by(SharedDashboard.created_at.desc()).all()
+
     return render_template(
         "settings/index.html",
         account_sid=account.twilio_account_sid or "",
@@ -134,6 +146,10 @@ def index():
         masked_callrail_key=masked_callrail_key,
         timezones=australian_timezones,
         current_timezone=account.timezone or "Australia/Adelaide",
+        account=account,
+        lines=lines,
+        partners=partners,
+        dashboards=dashboards,
         active_page="settings",
     )
 
