@@ -95,7 +95,7 @@ def index():
     lines = TrackingLine.query.filter_by(
         account_id=current_user.id, active=True
     ).all()
-    return render_template("upload/index.html", lines=lines)
+    return render_template("upload/index.html", lines=lines, active_page="upload")
 
 
 @bp.route("/serve/<filename>")

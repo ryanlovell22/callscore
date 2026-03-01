@@ -34,7 +34,7 @@
 </div>
 
 <!-- Filters -->
-<details>
+<details {% if filters.line or filters.classification %}open{% endif %}>
     <summary>Filters</summary>
     <form method="get" class="grid">
         <label>
@@ -121,6 +121,17 @@
         </tbody>
     </table>
 </figure>
+{% if pagination.pages > 1 %}
+<nav style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem;">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('dashboard.index', page=pagination.prev_num, **filters) }}" role="button" class="outline">&larr; Previous</a>
+    {% endif %}
+    <span style="align-self: center;">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+    {% if pagination.has_next %}
+    <a href="{{ url_for('dashboard.index', page=pagination.next_num, **filters) }}" role="button" class="outline">Next &rarr;</a>
+    {% endif %}
+</nav>
+{% endif %}
 {% else %}
 <article>
     <p>No calls found. {% if not lines %}Start by <a href="{{ url_for('lines.add') }}">adding a tracking line</a>.{% endif %}</p>

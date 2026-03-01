@@ -10,7 +10,7 @@
     <article>
         <h4>Call Info</h4>
         <table>
-            <tr><td><strong>Date</strong></td><td>{{ call.call_date.strftime('%d %b %Y %H:%M') if call.call_date else '—' }}</td></tr>
+            <tr><td><strong>Date</strong></td><td>{{ call.call_date|localtime }}</td></tr>
             <tr><td><strong>Caller</strong></td><td>{{ call.caller_number or '—' }}</td></tr>
             <tr><td><strong>Duration</strong></td><td>{{ '%d:%02d'|format(call.call_duration // 60, call.call_duration % 60) if call.call_duration else '—' }}</td></tr>
             <tr><td><strong>Tracking Line</strong></td><td>{{ call.tracking_line.label if call.tracking_line else '—' }}</td></tr>

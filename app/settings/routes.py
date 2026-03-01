@@ -97,10 +97,31 @@ def index():
     if connected:
         webhook_url = url_for("webhooks.twilio_ci_callback", _external=True)
 
+    import pytz
+    australian_timezones = [tz for tz in sorted(pytz.all_timezones) if tz.startswith('Australia/')]
+
     return render_template(
         "settings/index.html",
         account_sid=account.twilio_account_sid or "",
         masked_token=masked_token,
         connected=connected,
         webhook_url=webhook_url,
+        timezones=australian_timezones,
+        current_timezone=account.timezone or "Australia/Adelaide",
+        active_page="settings",
     )
+
+
+@bp.route("/timezone", methods=["POST"])
+@login_required
+@account_required
+def save_timezone():
+    tz = request.form.get("timezone", "Australia/Adelaide").strip()
+    import pytz
+    if tz in pytz.all_timezones:
+        current_user.timezone = tz
+        db.session.commit()
+        flash("Timezone updated.", "success")
+    else:
+        flash("Invalid timezone.", "error")
+    return redirect(url_for("settings.index"))

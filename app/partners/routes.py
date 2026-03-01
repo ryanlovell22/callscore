@@ -24,7 +24,7 @@ def index():
     partners = Partner.query.filter_by(account_id=current_user.id).order_by(
         Partner.name
     ).all()
-    return render_template("partners/index.html", partners=partners)
+    return render_template("partners/index.html", partners=partners, active_page="partners")
 
 
 @bp.route("/add", methods=["GET", "POST"])
@@ -38,20 +38,20 @@ def add():
 
         if not name or not email or not password:
             flash("All fields are required.", "error")
-            return render_template("partners/form.html")
+            return render_template("partners/form.html", active_page="partners")
 
         if len(password) < 8:
             flash("Password must be at least 8 characters.", "error")
-            return render_template("partners/form.html")
+            return render_template("partners/form.html", active_page="partners")
 
         # Check for duplicate email across both accounts and partners
         from ..models import Account
         if Account.query.filter_by(email=email).first():
             flash("That email is already in use.", "error")
-            return render_template("partners/form.html")
+            return render_template("partners/form.html", active_page="partners")
         if Partner.query.filter_by(email=email).first():
             flash("That email is already in use.", "error")
-            return render_template("partners/form.html")
+            return render_template("partners/form.html", active_page="partners")
 
         partner = Partner(
             account_id=current_user.id,
@@ -65,7 +65,7 @@ def add():
         flash(f"Partner '{name}' created.", "success")
         return redirect(url_for("partners.index"))
 
-    return render_template("partners/form.html")
+    return render_template("partners/form.html", active_page="partners")
 
 
 @bp.route("/<int:partner_id>/delete", methods=["POST"])

@@ -24,7 +24,7 @@ def index():
     lines = TrackingLine.query.filter_by(account_id=current_user.id).order_by(
         TrackingLine.label
     ).all()
-    return render_template("lines/index.html", lines=lines)
+    return render_template("lines/index.html", lines=lines, active_page="lines")
 
 
 @bp.route("/add", methods=["GET", "POST"])
@@ -51,7 +51,7 @@ def add():
         flash("Tracking line added.", "success")
         return redirect(url_for("lines.index"))
 
-    return render_template("lines/form.html", line=None, partners=partners)
+    return render_template("lines/form.html", line=None, partners=partners, active_page="lines")
 
 
 @bp.route("/<int:line_id>/edit", methods=["GET", "POST"])
@@ -77,7 +77,7 @@ def edit(line_id):
         flash("Tracking line updated.", "success")
         return redirect(url_for("lines.index"))
 
-    return render_template("lines/form.html", line=line, partners=partners)
+    return render_template("lines/form.html", line=line, partners=partners, active_page="lines")
 
 
 @bp.route("/<int:line_id>/delete", methods=["POST"])

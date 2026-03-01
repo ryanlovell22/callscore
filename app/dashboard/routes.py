@@ -14,13 +14,16 @@ from . import bp
 @bp.route("/")
 @login_required
 def index():
+    from sqlalchemy import func
+
     # Filters
+    page = request.args.get("page", 1, type=int)
     line_id = request.args.get("line", type=int)
     classification = request.args.get("classification")
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
 
-    # Default to current week (Monday–Sunday) if no date filters provided
+    # Default to current week (Monday-Sunday) if no date filters provided
     today = datetime.now(timezone.utc).date()
     monday = today - timedelta(days=today.weekday())  # weekday() 0=Mon
     sunday = monday + timedelta(days=6)
@@ -63,9 +66,24 @@ def index():
         Call.call_outcome.in_(["missed", "voicemail"])
     ).count()
 
-    # Table: show answered + voicemail calls (voicemails have useful transcripts).
-    # Exclude only true missed calls (0-second, no recording, nothing to show).
-    calls = query.filter(Call.call_outcome != "missed").order_by(Call.call_date.desc()).all()
+    # Stats via DB aggregates (on the filtered query, excluding true missed calls)
+    stats_query = query.filter(Call.call_outcome != "missed")
+    total = stats_query.count()
+    booked = stats_query.filter(Call.classification == "JOB_BOOKED").count()
+    not_booked = stats_query.filter(Call.classification == "NOT_BOOKED").count()
+    pending = stats_query.filter(Call.status.in_(["pending", "processing"])).count()
+    rate = round(booked / total * 100, 1) if total > 0 else 0
+
+    # Lead value via DB aggregate
+    total_value = db.session.query(
+        func.coalesce(func.sum(TrackingLine.cost_per_lead), 0)
+    ).join(Call, Call.tracking_line_id == TrackingLine.id).filter(
+        Call.id.in_(stats_query.filter(Call.classification == "JOB_BOOKED").with_entities(Call.id))
+    ).scalar()
+
+    # Paginate the table query
+    pagination = stats_query.order_by(Call.call_date.desc()).paginate(page=page, per_page=50, error_out=False)
+    calls = pagination.items
 
     if current_user.user_type == "partner":
         lines = [l for l in current_user.tracking_lines if l.active]
@@ -74,36 +92,31 @@ def index():
             account_id=current_user.id, active=True
         ).all()
 
-    # Stats
-    total = len(calls)
-    booked = sum(1 for c in calls if c.classification == "JOB_BOOKED")
-    not_booked = sum(1 for c in calls if c.classification == "NOT_BOOKED")
-    pending = sum(1 for c in calls if c.status in ("pending", "processing"))
-    rate = round(booked / total * 100, 1) if total > 0 else 0
-
-    # Calculate total lead value from booked calls
-    total_value = Decimal("0")
-    for c in calls:
-        if c.classification == "JOB_BOOKED" and c.tracking_line:
-            total_value += c.tracking_line.cost_per_lead or Decimal("0")
-
     # Build date range label
     is_default_week = (
         date_from == monday.strftime("%Y-%m-%d")
         and date_to == sunday.strftime("%Y-%m-%d")
     )
     if is_default_week:
-        week_label = "This week: {} – {}".format(
+        week_label = "This week: {} - {}".format(
             monday.strftime("%-d %b"), sunday.strftime("%-d %b %Y")
         )
     else:
-        week_label = "{} – {}".format(date_from, date_to)
+        week_label = "{} - {}".format(date_from, date_to)
+
+    filters = {
+        "line": line_id,
+        "classification": classification,
+        "date_from": date_from or "",
+        "date_to": date_to or "",
+    }
 
     return render_template(
         "dashboard/index.html",
         calls=calls,
         lines=lines,
         week_label=week_label,
+        pagination=pagination,
         stats={
             "total": total,
             "booked": booked,
@@ -113,12 +126,8 @@ def index():
             "total_value": total_value,
             "missed": missed,
         },
-        filters={
-            "line": line_id,
-            "classification": classification,
-            "date_from": date_from or "",
-            "date_to": date_to or "",
-        },
+        filters=filters,
+        active_page="dashboard",
     )
 
 
@@ -136,7 +145,7 @@ def call_detail(call_id):
         call = Call.query.filter_by(
             id=call_id, account_id=current_user.id
         ).first_or_404()
-    return render_template("dashboard/call_detail.html", call=call)
+    return render_template("dashboard/call_detail.html", call=call, active_page="dashboard")
 
 
 @bp.route("/calls/<int:call_id>/override", methods=["POST"])

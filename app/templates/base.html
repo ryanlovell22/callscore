@@ -16,12 +16,12 @@
             </ul>
             {% if current_user.is_authenticated %}
             <ul>
-                <li><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('dashboard.index') }}" {% if active_page == 'dashboard' %}aria-current="page"{% endif %}>Dashboard</a></li>
                 {% if current_user.user_type == 'account' %}
-                <li><a href="{{ url_for('lines.index') }}">Tracking Lines</a></li>
-                <li><a href="{{ url_for('partners.index') }}">Partners</a></li>
-                <li><a href="{{ url_for('upload.index') }}">Upload</a></li>
-                <li><a href="{{ url_for('settings.index') }}">Settings</a></li>
+                <li><a href="{{ url_for('lines.index') }}" {% if active_page == 'lines' %}aria-current="page"{% endif %}>Tracking Lines</a></li>
+                <li><a href="{{ url_for('partners.index') }}" {% if active_page == 'partners' %}aria-current="page"{% endif %}>Partners</a></li>
+                <li><a href="{{ url_for('upload.index') }}" {% if active_page == 'upload' %}aria-current="page"{% endif %}>Upload</a></li>
+                <li><a href="{{ url_for('settings.index') }}" {% if active_page == 'settings' %}aria-current="page"{% endif %}>Settings</a></li>
                 {% endif %}
                 <li><a href="{{ url_for('auth.logout') }}">Log out</a></li>
             </ul>
