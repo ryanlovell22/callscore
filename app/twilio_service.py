@@ -194,12 +194,14 @@ def create_ci_operator(account_sid, auth_token, service_sid):
     return operator_sid
 
 
-def update_ci_operator(account_sid, auth_token, operator_sid, config):
+def update_ci_operator(account_sid, auth_token, operator_sid, config,
+                       friendly_name="Job Booked Classifier"):
     """Update an existing custom operator's configuration.
 
     Args:
         operator_sid: The SID of the operator to update
         config: Dict with prompt and json_result_schema
+        friendly_name: Display name for the operator
 
     Returns:
         Updated operator dict from Twilio API
@@ -211,6 +213,8 @@ def update_ci_operator(account_sid, auth_token, operator_sid, config):
         url,
         auth=auth,
         data={
+            "FriendlyName": friendly_name,
+            "OperatorType": "GenerativeJSON",
             "Config": json.dumps(config),
         },
         timeout=30,
