@@ -12,11 +12,11 @@
     <form method="post">
         <label for="twilio_account_sid">Account SID</label>
         <input type="text" id="twilio_account_sid" name="twilio_account_sid"
-               value="{{ account_sid }}" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" required>
+               value="{{ account_sid }}" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off" required>
 
         <label for="twilio_auth_token">Auth Token</label>
         <input type="password" id="twilio_auth_token" name="twilio_auth_token"
-               value="{{ masked_token }}" placeholder="Enter your Auth Token">
+               value="{{ masked_token }}" placeholder="Enter your Auth Token" autocomplete="off">
 
         <button type="submit">Save</button>
     </form>
