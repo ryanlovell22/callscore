@@ -1,6 +1,7 @@
 import os
 import uuid
 import logging
+import threading
 from datetime import datetime, timezone
 
 from flask import render_template, request, redirect, url_for, flash, current_app
@@ -20,6 +21,57 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def _process_uploads(file_tasks, account_id, has_twilio, app):
+    """Background thread: transcribe + classify each uploaded file.
+
+    file_tasks is a list of dicts: {"call_id": int, "temp_path": str, "temp_filename": str}
+    """
+    with app.app_context():
+        account = db.session.get(Account, account_id)
+
+        for task in file_tasks:
+            call = db.session.get(Call, task["call_id"])
+            if not call:
+                continue
+
+            try:
+                if has_twilio:
+                    media_url = f"{task['base_url']}/upload/serve/{task['temp_filename']}"
+                    transcript_sid = submit_media_to_ci(
+                        account.twilio_account_sid,
+                        account.twilio_auth_token_encrypted,
+                        account.twilio_service_sid,
+                        media_url,
+                    )
+                    call.transcript_sid = transcript_sid
+                    db.session.commit()
+                else:
+                    from openai import OpenAI
+                    api_key = app.config.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY")
+                    client = OpenAI(api_key=api_key)
+
+                    with open(task["temp_path"], "rb") as audio_file:
+                        transcript = client.audio.transcriptions.create(
+                            model="whisper-1",
+                            file=audio_file,
+                        )
+
+                    call.transcript = transcript.text
+
+                    result = classify_transcript(transcript.text)
+                    call.classification = result.get("classification")
+                    call.summary = result.get("summary")
+                    call.customer_name = result.get("customer_name")
+                    call.booking_time = result.get("booking_time")
+                    call.status = "complete"
+                    db.session.commit()
+
+            except Exception as e:
+                logger.exception("Failed to process uploaded file (call_id=%s)", task["call_id"])
+                call.status = "failed"
+                db.session.commit()
+
+
 @bp.route("/", methods=["GET", "POST"])
 @login_required
 def index():
@@ -27,16 +79,9 @@ def index():
         from flask import abort
         abort(403)
     if request.method == "POST":
-        file = request.files.get("audio_file")
-        if not file or not file.filename:
-            flash("Please select an audio file.", "error")
-            return redirect(url_for("upload.index"))
-
-        if not allowed_file(file.filename):
-            flash(
-                f"Unsupported file type. Allowed: {', '.join(ALLOWED_EXTENSIONS)}",
-                "error",
-            )
+        files = request.files.getlist("audio_files")
+        if not files or not any(f.filename for f in files):
+            flash("Please select at least one audio file.", "error")
             return redirect(url_for("upload.index"))
 
         account = db.session.get(Account, current_user.id)
@@ -50,70 +95,68 @@ def index():
             )
             return redirect(url_for("settings.index"))
 
-        # Save file temporarily
-        ext = file.filename.rsplit(".", 1)[1].lower()
-        temp_filename = f"{uuid.uuid4()}.{ext}"
         upload_dir = os.path.join(current_app.instance_path, "uploads")
         os.makedirs(upload_dir, exist_ok=True)
-        temp_path = os.path.join(upload_dir, temp_filename)
-        file.save(temp_path)
-
-        # Create call record
         line_id = request.form.get("tracking_line_id", type=int)
-        call = Call(
-            account_id=current_user.id,
-            tracking_line_id=line_id if line_id else None,
-            caller_number="Upload",
-            call_date=datetime.now(timezone.utc),
-            source="upload",
-            status="processing",
-        )
-        db.session.add(call)
-        db.session.commit()
+        base_url = request.host_url.rstrip("/")
 
-        try:
-            if has_twilio:
-                # Twilio CI path — serve file via URL for Twilio to fetch
-                base_url = request.host_url.rstrip("/")
-                media_url = f"{base_url}/upload/serve/{temp_filename}"
+        file_tasks = []
+        skipped = 0
 
-                transcript_sid = submit_media_to_ci(
-                    account.twilio_account_sid,
-                    account.twilio_auth_token_encrypted,
-                    account.twilio_service_sid,
-                    media_url,
-                )
+        for file in files:
+            if not file or not file.filename:
+                continue
 
-                call.transcript_sid = transcript_sid
-                db.session.commit()
-            else:
-                # OpenAI path — transcribe locally with Whisper + classify with GPT
-                from openai import OpenAI
-                api_key = current_app.config.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY")
-                client = OpenAI(api_key=api_key)
+            if not allowed_file(file.filename):
+                skipped += 1
+                continue
 
-                with open(temp_path, "rb") as audio_file:
-                    transcript = client.audio.transcriptions.create(
-                        model="whisper-1",
-                        file=audio_file,
-                    )
+            # Save file
+            ext = file.filename.rsplit(".", 1)[1].lower()
+            temp_filename = f"{uuid.uuid4()}.{ext}"
+            temp_path = os.path.join(upload_dir, temp_filename)
+            file.save(temp_path)
 
-                call.transcript = transcript.text
-
-                result = classify_transcript(transcript.text)
-                call.classification = result.get("classification")
-                call.summary = result.get("summary")
-                call.customer_name = result.get("customer_name")
-                call.booking_time = result.get("booking_time")
-                call.status = "complete"
-                db.session.commit()
-
-            flash("File uploaded and submitted for analysis.", "success")
-        except Exception as e:
-            logger.exception("Failed to process uploaded recording")
-            call.status = "failed"
+            # Create call record
+            call = Call(
+                account_id=current_user.id,
+                tracking_line_id=line_id if line_id else None,
+                caller_number="Upload",
+                call_date=datetime.now(timezone.utc),
+                source="upload",
+                status="processing",
+            )
+            db.session.add(call)
             db.session.commit()
-            flash(f"Upload failed: {e}", "error")
+
+            file_tasks.append({
+                "call_id": call.id,
+                "temp_path": temp_path,
+                "temp_filename": temp_filename,
+                "base_url": base_url,
+            })
+
+        if not file_tasks:
+            flash(
+                f"No valid files to process. Allowed formats: {', '.join(ALLOWED_EXTENSIONS)}",
+                "error",
+            )
+            return redirect(url_for("upload.index"))
+
+        # Spawn background thread for processing
+        app = current_app._get_current_object()
+        thread = threading.Thread(
+            target=_process_uploads,
+            args=(file_tasks, current_user.id, has_twilio, app),
+            daemon=True,
+        )
+        thread.start()
+
+        count = len(file_tasks)
+        msg = f"{count} file{'s' if count != 1 else ''} uploaded — processing in background."
+        if skipped:
+            msg += f" {skipped} file{'s' if skipped != 1 else ''} skipped (unsupported format)."
+        flash(msg, "success")
 
         return redirect(url_for("dashboard.index"))
 
