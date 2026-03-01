@@ -282,10 +282,16 @@ def export_csv():
             call.summary or '',
         ])
 
+    csv_data = output.getvalue()
+    # UTF-8 BOM so Excel recognises the encoding correctly
+    bom = '\ufeff'
     return Response(
-        output.getvalue(),
-        mimetype='text/csv',
-        headers={'Content-Disposition': 'attachment; filename=callverdict_export.csv'}
+        bom + csv_data,
+        mimetype='text/csv; charset=utf-8',
+        headers={
+            'Content-Disposition': 'attachment; filename="callverdict_export.csv"',
+            'Content-Type': 'text/csv; charset=utf-8',
+        }
     )
 
 

@@ -153,34 +153,9 @@ def create_ci_operator(account_sid, auth_token, service_sid):
 
     # Create custom operator (Twilio CI uses form-encoded, not JSON body)
     operator_url = f"{TWILIO_CI_BASE}/Operators/Custom"
+    from .ai_classifier import CLASSIFICATION_PROMPT
     config = json.dumps({
-        "prompt": (
-            "You are analysing a phone conversation between a customer calling "
-            "a trades business in Australia. Your job is to determine whether "
-            "the customer booked a job during this call.\n\n"
-            "Classify the call as one of:\n\n"
-            "JOB_BOOKED - The customer and business agreed on a time or "
-            "arrangement for work to be done. This includes: scheduling an "
-            "appointment, accepting a quote, agreeing someone will come out, "
-            "providing or agreeing to text their address, or any clear "
-            "commitment to proceed.\n\n"
-            "NOT_BOOKED - No job was booked. This includes: general enquiries "
-            "without commitment, wrong numbers, price shopping "
-            "without booking, spam/robocalls, or calls where the customer "
-            "said they would think about it.\n\n"
-            "VOICEMAIL - The customer left a voicemail message. Only one "
-            "person is speaking (the customer) and there is no live "
-            "conversation. The recording is a message left after a beep or "
-            "automated greeting.\n\n"
-            "Also extract:\n"
-            "- A brief one-sentence summary of the call\n"
-            "- The service type discussed (e.g. lockout, rekey, tow, painting)\n"
-            "- Whether the customer mentioned urgency (same day, emergency)\n"
-            "- The customer's name if they mention it\n"
-            "- The customer's address if they mention it\n"
-            "- The booking time if a job was booked (e.g. 'tomorrow morning', "
-            "'Wednesday 2pm', 'this afternoon')"
-        ),
+        "prompt": CLASSIFICATION_PROMPT,
         "json_result_schema": {
             "type": "object",
             "properties": {
