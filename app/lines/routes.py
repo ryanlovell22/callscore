@@ -1,9 +1,14 @@
+import logging
+
 from flask import render_template, request, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
 
 from ..models import db, TrackingLine, Partner, Account
 from ..callrail_service import fetch_callrail_trackers
+from ..twilio_service import fetch_twilio_phone_numbers
 from . import bp
+
+logger = logging.getLogger(__name__)
 
 
 def account_required(f):
@@ -18,6 +23,74 @@ def account_required(f):
     return decorated
 
 
+def _get_available_numbers(account, exclude_line_id=None):
+    """Fetch phone numbers from connected sources and filter out already-assigned ones.
+
+    Args:
+        account: The Account object
+        exclude_line_id: If editing a line, keep its number in the list
+
+    Returns:
+        List of dicts with number, label, source, and optional callrail fields.
+    """
+    available = []
+
+    # Twilio numbers
+    twilio_connected = bool(
+        account.twilio_account_sid and account.twilio_auth_token_encrypted
+    )
+    if twilio_connected:
+        try:
+            twilio_numbers = fetch_twilio_phone_numbers(
+                account.twilio_account_sid,
+                account.twilio_auth_token_encrypted,
+            )
+            for num in twilio_numbers:
+                available.append({
+                    "number": num["phone_number"],
+                    "label": f"{num['phone_number']} — {num['friendly_name']} (Twilio)",
+                    "source": "twilio",
+                })
+        except Exception:
+            logger.exception("Failed to fetch Twilio phone numbers")
+
+    # CallRail numbers
+    callrail_connected = bool(
+        account.callrail_api_key_encrypted and account.callrail_account_id
+    )
+    if callrail_connected:
+        try:
+            trackers = fetch_callrail_trackers(
+                account.callrail_api_key_encrypted,
+                account.callrail_account_id,
+            )
+            for t in trackers:
+                available.append({
+                    "number": t["tracking_phone_number"],
+                    "label": f"{t['tracking_phone_number']} — {t['name'] or 'Unnamed'} (CallRail)",
+                    "source": "callrail",
+                    "callrail_tracker_id": str(t["id"]),
+                    "callrail_tracking_number": t["tracking_phone_number"],
+                })
+        except Exception:
+            logger.exception("Failed to fetch CallRail trackers")
+
+    # Filter out numbers already assigned to other tracking lines
+    existing_lines = TrackingLine.query.filter_by(account_id=account.id).all()
+    used_numbers = set()
+    for line in existing_lines:
+        if exclude_line_id and line.id == exclude_line_id:
+            continue
+        if line.twilio_phone_number:
+            used_numbers.add(line.twilio_phone_number)
+        if line.callrail_tracking_number:
+            used_numbers.add(line.callrail_tracking_number)
+
+    available = [n for n in available if n["number"] not in used_numbers]
+
+    return available
+
+
 @bp.route("/")
 @login_required
 @account_required
@@ -26,69 +99,11 @@ def index():
         TrackingLine.label
     ).all()
 
-    # Check if CallRail is connected for import button
-    account = db.session.get(Account, current_user.id)
-    callrail_connected = bool(
-        account and account.callrail_api_key_encrypted and account.callrail_account_id
-    )
-
     return render_template(
         "lines/index.html",
         lines=lines,
-        callrail_connected=callrail_connected,
         active_page="lines",
     )
-
-
-@bp.route("/import-callrail", methods=["POST"])
-@login_required
-@account_required
-def import_callrail():
-    account = db.session.get(Account, current_user.id)
-    if not account or not account.callrail_api_key_encrypted or not account.callrail_account_id:
-        flash("Connect CallRail in Settings first.", "error")
-        return redirect(url_for("lines.index"))
-
-    try:
-        trackers = fetch_callrail_trackers(
-            account.callrail_api_key_encrypted,
-            account.callrail_account_id,
-        )
-    except Exception:
-        flash("Failed to fetch tracking numbers from CallRail. Please try again.", "error")
-        return redirect(url_for("lines.index"))
-
-    imported = 0
-    skipped = 0
-    for tracker in trackers:
-        # Skip if already imported (by tracker ID)
-        existing = TrackingLine.query.filter_by(
-            account_id=current_user.id,
-            callrail_tracker_id=str(tracker["id"]),
-        ).first()
-        if existing:
-            skipped += 1
-            continue
-
-        line = TrackingLine(
-            account_id=current_user.id,
-            callrail_tracker_id=str(tracker["id"]),
-            callrail_tracking_number=tracker["tracking_phone_number"],
-            label=tracker["name"] or tracker["tracking_phone_number"],
-        )
-        db.session.add(line)
-        imported += 1
-
-    db.session.commit()
-
-    if imported:
-        flash(f"Imported {imported} tracking number(s) from CallRail.", "success")
-    if skipped:
-        flash(f"Skipped {skipped} already imported number(s).", "info")
-    if not imported and not skipped:
-        flash("No tracking numbers found in your CallRail account.", "info")
-
-    return redirect(url_for("lines.index"))
 
 
 @bp.route("/add", methods=["GET", "POST"])
@@ -98,13 +113,22 @@ def add():
     partners = Partner.query.filter_by(account_id=current_user.id).order_by(
         Partner.name
     ).all()
+    account = db.session.get(Account, current_user.id)
 
     if request.method == "POST":
+        selected_number = request.form.get("twilio_phone_number", "").strip()
+
+        # Look up CallRail metadata if this is a CallRail number
+        callrail_tracker_id = request.form.get("callrail_tracker_id", "").strip() or None
+        callrail_tracking_number = request.form.get("callrail_tracking_number", "").strip() or None
+
         partner_id = request.form.get("partner_id", type=int) or None
         line = TrackingLine(
             account_id=current_user.id,
             partner_id=partner_id,
-            twilio_phone_number=request.form.get("twilio_phone_number", "").strip(),
+            twilio_phone_number=selected_number,
+            callrail_tracker_id=callrail_tracker_id,
+            callrail_tracking_number=callrail_tracking_number,
             label=request.form.get("label", "").strip(),
             partner_name=request.form.get("partner_name", "").strip(),
             partner_phone=request.form.get("partner_phone", "").strip(),
@@ -115,7 +139,15 @@ def add():
         flash("Tracking line added.", "success")
         return redirect(url_for("lines.index"))
 
-    return render_template("lines/form.html", line=None, partners=partners, active_page="lines")
+    available_numbers = _get_available_numbers(account) if account else []
+
+    return render_template(
+        "lines/form.html",
+        line=None,
+        partners=partners,
+        available_numbers=available_numbers,
+        active_page="lines",
+    )
 
 
 @bp.route("/<int:line_id>/edit", methods=["GET", "POST"])
@@ -128,9 +160,14 @@ def edit(line_id):
     partners = Partner.query.filter_by(account_id=current_user.id).order_by(
         Partner.name
     ).all()
+    account = db.session.get(Account, current_user.id)
 
     if request.method == "POST":
-        line.twilio_phone_number = request.form.get("twilio_phone_number", "").strip()
+        selected_number = request.form.get("twilio_phone_number", "").strip()
+
+        line.twilio_phone_number = selected_number
+        line.callrail_tracker_id = request.form.get("callrail_tracker_id", "").strip() or None
+        line.callrail_tracking_number = request.form.get("callrail_tracking_number", "").strip() or None
         line.label = request.form.get("label", "").strip()
         line.partner_name = request.form.get("partner_name", "").strip()
         line.partner_phone = request.form.get("partner_phone", "").strip()
@@ -141,7 +178,15 @@ def edit(line_id):
         flash("Tracking line updated.", "success")
         return redirect(url_for("lines.index"))
 
-    return render_template("lines/form.html", line=line, partners=partners, active_page="lines")
+    available_numbers = _get_available_numbers(account, exclude_line_id=line.id) if account else []
+
+    return render_template(
+        "lines/form.html",
+        line=line,
+        partners=partners,
+        available_numbers=available_numbers,
+        active_page="lines",
+    )
 
 
 @bp.route("/<int:line_id>/delete", methods=["POST"])

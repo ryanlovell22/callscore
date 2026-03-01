@@ -34,6 +34,41 @@ def validate_twilio_credentials(account_sid, auth_token):
         return False
 
 
+# --- Phone Number Fetch ---
+
+
+def fetch_twilio_phone_numbers(account_sid, auth_token):
+    """Fetch all incoming phone numbers from the Twilio account.
+
+    Returns:
+        List of dicts with phone_number and friendly_name.
+    """
+    url = f"{TWILIO_API_BASE}/Accounts/{account_sid}/IncomingPhoneNumbers.json"
+    params = {"PageSize": 100}
+    auth = get_auth(account_sid, auth_token)
+    all_numbers = []
+
+    while url:
+        resp = requests.get(url, params=params, auth=auth, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+
+        for num in data.get("incoming_phone_numbers", []):
+            all_numbers.append({
+                "phone_number": num["phone_number"],
+                "friendly_name": num.get("friendly_name", num["phone_number"]),
+            })
+
+        next_page = data.get("next_page_uri")
+        if next_page:
+            url = f"https://api.twilio.com{next_page}"
+            params = {}
+        else:
+            url = None
+
+    return all_numbers
+
+
 # --- Recording Fetch ---
 
 

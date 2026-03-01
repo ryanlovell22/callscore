@@ -4,13 +4,8 @@
 {% block content %}
 <h2>Tracking Lines</h2>
 
-<div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem;">
+<div style="margin-bottom: 1rem;">
     <a href="{{ url_for('lines.add') }}" role="button">Add Line</a>
-    {% if callrail_connected %}
-    <form method="post" action="{{ url_for('lines.import_callrail') }}" style="margin: 0;">
-        <button type="submit" class="outline">Import from CallRail</button>
-    </form>
-    {% endif %}
 </div>
 
 {% if lines %}

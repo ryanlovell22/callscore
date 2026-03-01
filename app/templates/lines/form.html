@@ -10,8 +10,28 @@
         <input type="text" id="label" name="label" value="{{ line.label if line else '' }}" placeholder="e.g. Locksmith Adelaide" required>
 
         <label for="twilio_phone_number">Phone Number</label>
-        <input type="tel" id="twilio_phone_number" name="twilio_phone_number"
-               value="{{ line.twilio_phone_number if line else '' }}" placeholder="+61412345678">
+        {% if available_numbers %}
+        <select id="twilio_phone_number" name="twilio_phone_number" onchange="updateCallRailFields(this)">
+            <option value="">— Select a number —</option>
+            {% for num in available_numbers %}
+            <option value="{{ num.number }}"
+                    data-source="{{ num.source }}"
+                    data-callrail-tracker-id="{{ num.callrail_tracker_id or '' }}"
+                    data-callrail-tracking-number="{{ num.callrail_tracking_number or '' }}"
+                    {% if line and line.twilio_phone_number == num.number %}selected{% endif %}>
+                {{ num.label }}
+            </option>
+            {% endfor %}
+        </select>
+        {% else %}
+        <select id="twilio_phone_number" name="twilio_phone_number" disabled>
+            <option value="">No numbers available — connect Twilio or CallRail in Settings</option>
+        </select>
+        {% endif %}
+        <input type="hidden" id="callrail_tracker_id" name="callrail_tracker_id"
+               value="{{ line.callrail_tracker_id if line else '' }}">
+        <input type="hidden" id="callrail_tracking_number" name="callrail_tracking_number"
+               value="{{ line.callrail_tracking_number if line else '' }}">
 
         <label for="partner_name">Partner Name</label>
         <input type="text" id="partner_name" name="partner_name"
@@ -44,4 +64,12 @@
         <a href="{{ url_for('lines.index') }}" role="button" class="outline">Cancel</a>
     </form>
 </article>
+
+<script>
+function updateCallRailFields(select) {
+    var opt = select.options[select.selectedIndex];
+    document.getElementById('callrail_tracker_id').value = opt.dataset.callrailTrackerId || '';
+    document.getElementById('callrail_tracking_number').value = opt.dataset.callrailTrackingNumber || '';
+}
+</script>
 {% endblock %}
