@@ -221,19 +221,30 @@ def call_recording(call_id):
     if not call.recording_url or not account:
         return "Recording not available", 404
 
-    resp = http_requests.get(
-        f"{call.recording_url}.mp3",
-        auth=(account.twilio_account_sid, account.twilio_auth_token_encrypted),
-        stream=True,
-        timeout=30,
-    )
+    # Twilio recordings need auth; CallRail CDN URLs are pre-signed
+    is_twilio = "twilio.com" in call.recording_url
+    if is_twilio:
+        resp = http_requests.get(
+            f"{call.recording_url}.mp3",
+            auth=(account.twilio_account_sid, account.twilio_auth_token_encrypted),
+            stream=True,
+            timeout=30,
+        )
+    else:
+        resp = http_requests.get(
+            call.recording_url,
+            stream=True,
+            timeout=30,
+        )
 
     if resp.status_code != 200:
         return "Recording not available", 404
 
+    content_type = resp.headers.get("Content-Type", "audio/mpeg")
+
     return Response(
         resp.iter_content(chunk_size=8192),
-        content_type="audio/mpeg",
+        content_type=content_type,
         headers={"Content-Disposition": "inline"},
     )
 
