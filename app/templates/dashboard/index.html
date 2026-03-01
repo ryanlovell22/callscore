@@ -100,15 +100,15 @@
                 <td>{{ '%d:%02d'|format(call.call_duration // 60, call.call_duration % 60) if call.call_duration else '—' }}</td>
                 <td>
                     {% if call.classification == 'JOB_BOOKED' %}
-                        <mark style="background: var(--pico-color-green-100, #d4edda); color: var(--pico-color-green-700, #155724);">Booked</mark>
+                        <mark class="badge-booked">Booked</mark>
                     {% elif call.classification == 'VOICEMAIL' %}
-                        <mark style="background: var(--pico-color-orange-100, #fff3cd); color: var(--pico-color-orange-700, #856404);">Voicemail</mark>
+                        <mark class="badge-voicemail">Voicemail</mark>
                     {% elif call.classification == 'NOT_BOOKED' %}
-                        <mark style="background: var(--pico-color-red-100, #f8d7da); color: var(--pico-color-red-700, #721c24);">Not Booked</mark>
+                        <mark class="badge-not-booked">Not Booked</mark>
                     {% elif call.status == 'processing' %}
-                        <mark style="background: var(--pico-color-yellow-100, #fff3cd); color: var(--pico-color-yellow-700, #856404);">Processing</mark>
+                        <mark class="badge-processing">Processing</mark>
                     {% elif call.status == 'failed' %}
-                        <mark style="background: var(--pico-color-red-100, #f8d7da); color: var(--pico-color-red-700, #721c24);">Failed</mark>
+                        <mark class="badge-failed">Failed</mark>
                     {% else %}
                         <mark>Pending</mark>
                     {% endif %}

@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Call Proof Dashboard — CallVerdict</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <header class="container">
@@ -66,11 +67,11 @@
                         <td>{{ '%d:%02d'|format(call.call_duration // 60, call.call_duration % 60) if call.call_duration else '—' }}</td>
                         <td>
                             {% if call.classification == 'JOB_BOOKED' %}
-                            <mark>Job Booked</mark>
+                            <mark class="badge-booked">Job Booked</mark>
                             {% elif call.classification == 'NOT_BOOKED' %}
-                            Not Booked
+                            <mark class="badge-not-booked">Not Booked</mark>
                             {% elif call.classification == 'VOICEMAIL' %}
-                            Voicemail
+                            <mark class="badge-voicemail">Voicemail</mark>
                             {% else %}
                             {{ call.status | capitalize }}
                             {% endif %}
