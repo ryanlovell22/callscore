@@ -25,7 +25,7 @@
     </article>
     <article>
         <h3>${{ "%.2f"|format(stats.total_value) }}</h3>
-        <p>Lead Value</p>
+        <p>{% if current_user.user_type == 'partner' %}Lead Cost{% else %}Lead Value{% endif %}</p>
     </article>
     <article>
         <h3 style="color: var(--pico-color-orange-500, orange);">{{ stats.missed }}</h3>

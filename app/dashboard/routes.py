@@ -68,9 +68,13 @@ def index():
     except ValueError:
         pass
 
-    # Missed calls count: includes 0-second missed AND voicemails
+    # Missed calls count: call_outcome=missed OR AI classified as VOICEMAIL
+    from sqlalchemy import or_
     missed = query.filter(
-        Call.call_outcome.in_(["missed", "voicemail"])
+        or_(
+            Call.call_outcome.in_(["missed", "voicemail"]),
+            Call.classification == "VOICEMAIL",
+        )
     ).count()
 
     # Stats via DB aggregates (on the filtered query, excluding true missed calls)
