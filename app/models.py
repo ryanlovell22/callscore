@@ -102,6 +102,8 @@ class Call(db.Model):
     recording_url = db.Column(db.Text)
     source = db.Column(db.String(20), default="twilio")
 
+    call_outcome = db.Column(db.String(20), nullable=False, default="answered")
+
     # Analysis results
     transcript_sid = db.Column(db.String(255))
     status = db.Column(db.String(20), default="pending")
@@ -112,6 +114,11 @@ class Call(db.Model):
     urgent = db.Column(db.Boolean)
     full_transcript = db.Column(db.Text)
     analysed_at = db.Column(db.DateTime)
+
+    # Customer booking details (AI-extracted)
+    customer_name = db.Column(db.String(255))
+    customer_address = db.Column(db.Text)
+    booking_time = db.Column(db.String(255))
     created_at = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc)
     )

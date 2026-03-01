@@ -26,6 +26,10 @@
         <h3>${{ "%.2f"|format(stats.total_value) }}</h3>
         <p>Lead Value</p>
     </article>
+    <article>
+        <h3 style="color: var(--pico-color-orange-500, orange);">{{ stats.missed }}</h3>
+        <p>Missed Calls</p>
+    </article>
 </div>
 
 <!-- Filters -->
@@ -75,8 +79,10 @@
                 <th>Date</th>
                 <th>Line</th>
                 <th>Caller</th>
+                <th>Customer</th>
                 <th>Duration</th>
                 <th>Status</th>
+                <th>Booking Time</th>
                 <th>Summary</th>
                 <th></th>
             </tr>
@@ -87,6 +93,7 @@
                 <td>{{ call.call_date.strftime('%d %b %Y %H:%M') if call.call_date else '—' }}</td>
                 <td>{{ call.tracking_line.label if call.tracking_line else '—' }}</td>
                 <td>{{ call.caller_number or '—' }}</td>
+                <td>{{ call.customer_name or '—' }}</td>
                 <td>{{ '%d:%02d'|format(call.call_duration // 60, call.call_duration % 60) if call.call_duration else '—' }}</td>
                 <td>
                     {% if call.classification == 'JOB_BOOKED' %}
@@ -101,6 +108,7 @@
                         <mark>Pending</mark>
                     {% endif %}
                 </td>
+                <td>{{ call.booking_time or '—' }}</td>
                 <td>{{ call.summary[:80] + '...' if call.summary and call.summary|length > 80 else call.summary or '—' }}</td>
                 <td><a href="{{ url_for('dashboard.call_detail', call_id=call.id) }}">View</a></td>
             </tr>

@@ -63,6 +63,41 @@ def get_call_details(account_sid, auth_token, call_sid):
     return resp.json()
 
 
+def fetch_calls(account_sid, auth_token, status_list, date_after=None):
+    """Fetch calls from Twilio filtered by status.
+
+    Args:
+        status_list: List of call statuses to fetch (e.g. ['no-answer', 'busy', 'canceled'])
+        date_after: Only fetch calls created after this datetime
+
+    Returns:
+        List of call dicts from Twilio API
+    """
+    auth = get_auth(account_sid, auth_token)
+    all_calls = []
+
+    for status in status_list:
+        url = f"{TWILIO_API_BASE}/Accounts/{account_sid}/Calls.json"
+        params = {"PageSize": 100, "Status": status}
+        if date_after:
+            params["StartTime>"] = date_after.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        while url:
+            resp = requests.get(url, params=params, auth=auth, timeout=30)
+            resp.raise_for_status()
+            data = resp.json()
+            all_calls.extend(data.get("calls", []))
+
+            next_page = data.get("next_page_uri")
+            if next_page:
+                url = f"https://api.twilio.com{next_page}"
+                params = {}
+            else:
+                url = None
+
+    return all_calls
+
+
 # --- Conversational Intelligence ---
 
 
@@ -159,6 +194,31 @@ def create_ci_operator(account_sid, auth_token, service_sid):
     return operator_sid
 
 
+def update_ci_operator(account_sid, auth_token, operator_sid, config):
+    """Update an existing custom operator's configuration.
+
+    Args:
+        operator_sid: The SID of the operator to update
+        config: Dict with prompt and json_result_schema
+
+    Returns:
+        Updated operator dict from Twilio API
+    """
+    url = f"{TWILIO_CI_BASE}/Operators/Custom/{operator_sid}"
+    auth = get_auth(account_sid, auth_token)
+
+    resp = requests.post(
+        url,
+        auth=auth,
+        data={
+            "Config": json.dumps(config),
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
 def submit_recording_to_ci(account_sid, auth_token, service_sid, recording_url):
     """Submit a Twilio recording to Conversational Intelligence for analysis.
 
@@ -249,6 +309,9 @@ def fetch_operator_results(account_sid, auth_token, transcript_sid):
         "summary": extracted.get("summary"),
         "service_type": extracted.get("service_type"),
         "urgent": extracted.get("urgent", False),
+        "customer_name": extracted.get("customer_name"),
+        "customer_address": extracted.get("customer_address"),
+        "booking_time": extracted.get("booking_time"),
     }
 
 

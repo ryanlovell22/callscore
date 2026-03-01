@@ -29,6 +29,7 @@ def index():
         account_id = current_user.id
         query = Call.query.filter_by(account_id=account_id)
 
+    # Apply user filters to the base query
     if line_id:
         query = query.filter_by(tracking_line_id=line_id)
     if classification and classification in ("JOB_BOOKED", "NOT_BOOKED"):
@@ -46,7 +47,11 @@ def index():
         except ValueError:
             pass
 
-    calls = query.order_by(Call.call_date.desc()).all()
+    # Missed calls count (respects same filters)
+    missed = query.filter(Call.call_outcome == "missed").count()
+
+    # Answered calls only for the table (excludes missed)
+    calls = query.filter(Call.call_outcome != "missed").order_by(Call.call_date.desc()).all()
 
     if current_user.user_type == "partner":
         lines = [l for l in current_user.tracking_lines if l.active]
@@ -79,6 +84,7 @@ def index():
             "pending": pending,
             "rate": rate,
             "total_value": total_value,
+            "missed": missed,
         },
         filters={
             "line": line_id,

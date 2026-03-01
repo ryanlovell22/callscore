@@ -42,6 +42,21 @@
             <tr><td><strong>Urgent</strong></td><td>{{ 'Yes' if call.urgent else 'No' }}</td></tr>
         </table>
 
+        {% if call.customer_name or call.booking_time or call.customer_address %}
+        <h5>Booking Details</h5>
+        <table>
+            {% if call.customer_name %}
+            <tr><td><strong>Customer Name</strong></td><td>{{ call.customer_name }}</td></tr>
+            {% endif %}
+            {% if call.booking_time %}
+            <tr><td><strong>Booking Time</strong></td><td>{{ call.booking_time }}</td></tr>
+            {% endif %}
+            {% if call.customer_address %}
+            <tr><td><strong>Address</strong></td><td>{{ call.customer_address }}</td></tr>
+            {% endif %}
+        </table>
+        {% endif %}
+
         {% if current_user.user_type == 'account' %}
         <!-- Manual Override -->
         <h5>Override Classification</h5>

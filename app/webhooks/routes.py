@@ -47,6 +47,9 @@ def twilio_ci_callback():
             call.summary = operator_results.get("summary")
             call.service_type = operator_results.get("service_type")
             call.urgent = operator_results.get("urgent", False)
+            call.customer_name = operator_results.get("customer_name")
+            call.customer_address = operator_results.get("customer_address")
+            call.booking_time = operator_results.get("booking_time")
 
         # Fetch full transcript text
         transcript_text = fetch_transcript_text(

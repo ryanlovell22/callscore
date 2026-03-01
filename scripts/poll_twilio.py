@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import create_app
 from app.models import db, Account, Call, TrackingLine
-from app.twilio_service import fetch_recordings, get_call_details, submit_recording_to_ci
+from app.twilio_service import fetch_recordings, fetch_calls, get_call_details, submit_recording_to_ci
 
 logging.basicConfig(
     level=logging.INFO,
@@ -111,6 +111,7 @@ def poll_account(account):
             recording_url=recording_url,
             source="twilio",
             status="processing",
+            call_outcome="answered",
         )
         db.session.add(call)
         db.session.flush()  # Get the call ID
@@ -141,6 +142,73 @@ def poll_account(account):
     return new_count
 
 
+def poll_missed_calls(account):
+    """Fetch missed calls (no-answer, busy, canceled) and create records."""
+    if not account.twilio_account_sid or not account.twilio_auth_token_encrypted:
+        return 0
+
+    since = datetime.now(timezone.utc) - timedelta(minutes=10)
+
+    logger.info(
+        "Account %s: Fetching missed calls since %s", account.id, since.isoformat()
+    )
+
+    missed_calls = fetch_calls(
+        account.twilio_account_sid,
+        account.twilio_auth_token_encrypted,
+        status_list=["no-answer", "busy", "canceled"],
+        date_after=since,
+    )
+
+    new_count = 0
+    for twilio_call in missed_calls:
+        call_sid = twilio_call.get("sid")
+
+        # Dedup on twilio_call_sid
+        existing = Call.query.filter_by(
+            account_id=account.id, twilio_call_sid=call_sid
+        ).first()
+        if existing:
+            continue
+
+        to_number = twilio_call.get("to", "")
+        from_number = twilio_call.get("from", "")
+        duration = int(twilio_call.get("duration") or 0)
+
+        # Match to a tracking line
+        tracking_line = TrackingLine.query.filter_by(
+            account_id=account.id, twilio_phone_number=to_number, active=True
+        ).first()
+
+        # Parse the date
+        date_str = twilio_call.get("date_created")
+        call_date = None
+        if date_str:
+            try:
+                call_date = datetime.strptime(
+                    date_str, "%a, %d %b %Y %H:%M:%S %z"
+                )
+            except ValueError:
+                call_date = datetime.now(timezone.utc)
+
+        call = Call(
+            account_id=account.id,
+            tracking_line_id=tracking_line.id if tracking_line else None,
+            twilio_call_sid=call_sid,
+            caller_number=from_number,
+            call_duration=duration,
+            call_date=call_date,
+            source="twilio",
+            call_outcome="missed",
+            status="completed",
+        )
+        db.session.add(call)
+        new_count += 1
+
+    db.session.commit()
+    return new_count
+
+
 def main():
     app = create_app()
     with app.app_context():
@@ -151,6 +219,7 @@ def main():
         logger.info("Polling %d accounts for new recordings", len(accounts))
 
         total_new = 0
+        total_missed = 0
         for account in accounts:
             try:
                 count = poll_account(account)
@@ -160,7 +229,15 @@ def main():
             except Exception as e:
                 logger.exception("Error polling account %s: %s", account.id, e)
 
-        logger.info("Done. %d new recordings submitted.", total_new)
+            try:
+                missed_count = poll_missed_calls(account)
+                total_missed += missed_count
+                if missed_count:
+                    logger.info("Account %s: %d missed calls", account.id, missed_count)
+            except Exception as e:
+                logger.exception("Error polling missed calls for account %s: %s", account.id, e)
+
+        logger.info("Done. %d new recordings, %d missed calls.", total_new, total_missed)
 
 
 if __name__ == "__main__":
