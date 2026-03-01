@@ -87,10 +87,12 @@ def poll_account(account, since):
         to_number = call_details.get("to", "")
         from_number = call_details.get("from", "")
 
-        # Match to a tracking line
+        # Match to a tracking line — skip if unmatched
         tracking_line = TrackingLine.query.filter_by(
             account_id=account.id, twilio_phone_number=to_number, active=True
         ).first()
+        if not tracking_line:
+            continue
 
         recording_url = (
             f"https://api.twilio.com/2010-04-01/Accounts/"
@@ -182,10 +184,12 @@ def poll_missed_calls(account, since):
         from_number = twilio_call.get("from", "")
         duration = int(twilio_call.get("duration") or 0)
 
-        # Match to a tracking line
+        # Match to a tracking line — skip if unmatched
         tracking_line = TrackingLine.query.filter_by(
             account_id=account.id, twilio_phone_number=to_number, active=True
         ).first()
+        if not tracking_line:
+            continue
 
         # Parse the date
         date_str = twilio_call.get("date_created")
@@ -200,7 +204,7 @@ def poll_missed_calls(account, since):
 
         call = Call(
             account_id=account.id,
-            tracking_line_id=tracking_line.id if tracking_line else None,
+            tracking_line_id=tracking_line.id,
             twilio_call_sid=call_sid,
             caller_number=from_number,
             call_duration=duration,
@@ -287,14 +291,16 @@ def poll_short_answered_calls(account, since):
             if near_dup:
                 continue
 
-        # Match to a tracking line
+        # Match to a tracking line — skip if unmatched
         tracking_line = TrackingLine.query.filter_by(
             account_id=account.id, twilio_phone_number=to_number, active=True
         ).first()
+        if not tracking_line:
+            continue
 
         call = Call(
             account_id=account.id,
-            tracking_line_id=tracking_line.id if tracking_line else None,
+            tracking_line_id=tracking_line.id,
             twilio_call_sid=call_sid,
             caller_number=from_number,
             call_duration=duration,

@@ -34,7 +34,7 @@
 </div>
 
 <!-- Filters -->
-<details {% if filters.line or filters.classification %}open{% endif %}>
+<details {% if filters.line or filters.partner or filters.classification %}open{% endif %}>
     <summary>Filters</summary>
     <form method="get" class="grid">
         <label>
@@ -48,6 +48,19 @@
                 {% endfor %}
             </select>
         </label>
+        {% if partners %}
+        <label>
+            Partner
+            <select name="partner">
+                <option value="">All partners</option>
+                {% for p in partners %}
+                <option value="{{ p.id }}" {% if filters.partner == p.id %}selected{% endif %}>
+                    {{ p.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+        {% endif %}
         <label>
             Classification
             <select name="classification">

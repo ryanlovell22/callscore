@@ -7,7 +7,7 @@ import requests as http_requests
 from flask import render_template, request, redirect, url_for, flash, jsonify, Response, abort
 from flask_login import login_required, current_user
 
-from ..models import db, Call, TrackingLine, Account
+from ..models import db, Call, TrackingLine, Account, Partner
 from . import bp
 
 
@@ -19,6 +19,7 @@ def index():
     # Filters
     page = request.args.get("page", 1, type=int)
     line_id = request.args.get("line", type=int)
+    partner_id = request.args.get("partner", type=int)
     classification = request.args.get("classification")
     date_from = request.args.get("date_from")
     date_to = request.args.get("date_to")
@@ -46,6 +47,13 @@ def index():
         query = Call.query.filter_by(account_id=account_id)
 
     # Apply user filters to the base query
+    if partner_id:
+        partner_line_ids_filter = [
+            l.id for l in TrackingLine.query.filter_by(
+                account_id=account_id, partner_id=partner_id, active=True
+            ).all()
+        ]
+        query = query.filter(Call.tracking_line_id.in_(partner_line_ids_filter))
     if line_id:
         query = query.filter_by(tracking_line_id=line_id)
     if classification and classification in ("JOB_BOOKED", "NOT_BOOKED"):
@@ -87,10 +95,12 @@ def index():
 
     if current_user.user_type == "partner":
         lines = [l for l in current_user.tracking_lines if l.active]
+        partners = []
     else:
         lines = TrackingLine.query.filter_by(
             account_id=current_user.id, active=True
         ).all()
+        partners = Partner.query.filter_by(account_id=current_user.id).all()
 
     # Build date range label
     is_default_week = (
@@ -106,6 +116,7 @@ def index():
 
     filters = {
         "line": line_id,
+        "partner": partner_id,
         "classification": classification,
         "date_from": date_from or "",
         "date_to": date_to or "",
@@ -115,6 +126,7 @@ def index():
         "dashboard/index.html",
         calls=calls,
         lines=lines,
+        partners=partners,
         week_label=week_label,
         pagination=pagination,
         stats={
