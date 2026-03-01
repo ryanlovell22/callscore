@@ -216,6 +216,102 @@ def poll_missed_calls(account, since):
     return new_count
 
 
+def poll_short_answered_calls(account, since):
+    """Fetch completed calls that have no recording in our DB.
+
+    Catches very short answered calls where Twilio didn't create a recording.
+    These fall through both poll_account (no recording) and poll_missed_calls
+    (status is 'completed', not 'no-answer').
+
+    Note: Twilio creates separate call legs for forwarded calls (parent +
+    child), each with a different call SID. The recording is on the child
+    leg, but the Calls API returns the parent. So we dedup by caller number
+    + time window, not just call SID.
+    """
+    if not account.twilio_account_sid or not account.twilio_auth_token_encrypted:
+        return 0
+
+    logger.info(
+        "Account %s: Fetching short answered calls since %s",
+        account.id, since.isoformat(),
+    )
+
+    completed_calls = fetch_calls(
+        account.twilio_account_sid,
+        account.twilio_auth_token_encrypted,
+        status_list=["completed"],
+        date_after=since,
+    )
+
+    new_count = 0
+    for twilio_call in completed_calls:
+        call_sid = twilio_call.get("sid")
+        duration = int(twilio_call.get("duration") or 0)
+
+        # Only interested in short calls — longer ones already come in via
+        # recordings in poll_account(). Using a generous threshold to avoid
+        # missing edge cases where recording duration differs from call duration.
+        if duration > 15:
+            continue
+
+        # Dedup on twilio_call_sid
+        existing = Call.query.filter_by(
+            account_id=account.id, twilio_call_sid=call_sid
+        ).first()
+        if existing:
+            continue
+
+        from_number = twilio_call.get("from", "")
+        to_number = twilio_call.get("to", "")
+
+        # Parse the date
+        date_str = twilio_call.get("date_created")
+        call_date = None
+        if date_str:
+            try:
+                call_date = datetime.strptime(
+                    date_str, "%a, %d %b %Y %H:%M:%S %z"
+                )
+            except ValueError:
+                call_date = datetime.now(timezone.utc)
+
+        # Dedup by caller + time window. Forwarded calls create two legs
+        # with different SIDs but same caller and near-identical timestamps.
+        if call_date:
+            window = timedelta(minutes=3)
+            near_dup = Call.query.filter(
+                Call.account_id == account.id,
+                Call.caller_number == from_number,
+                Call.call_date.between(call_date - window, call_date + window),
+            ).first()
+            if near_dup:
+                continue
+
+        # Match to a tracking line
+        tracking_line = TrackingLine.query.filter_by(
+            account_id=account.id, twilio_phone_number=to_number, active=True
+        ).first()
+
+        call = Call(
+            account_id=account.id,
+            tracking_line_id=tracking_line.id if tracking_line else None,
+            twilio_call_sid=call_sid,
+            caller_number=from_number,
+            call_duration=duration,
+            call_date=call_date,
+            source="twilio",
+            call_outcome="answered",
+            status="completed",
+            classification="NOT_BOOKED",
+            summary="Very short call — no recording available.",
+        )
+        db.session.add(call)
+        new_count += 1
+
+    db.session.commit()
+    return new_count
+
+
 def main():
     parser = argparse.ArgumentParser(description="Poll Twilio for new calls")
     parser.add_argument(
@@ -242,6 +338,7 @@ def main():
 
         total_new = 0
         total_missed = 0
+        total_short = 0
         for account in accounts:
             try:
                 count = poll_account(account, since)
@@ -259,7 +356,18 @@ def main():
             except Exception as e:
                 logger.exception("Error polling missed calls for account %s: %s", account.id, e)
 
-        logger.info("Done. %d new recordings, %d missed calls.", total_new, total_missed)
+            try:
+                short_count = poll_short_answered_calls(account, since)
+                total_short += short_count
+                if short_count:
+                    logger.info("Account %s: %d short answered calls", account.id, short_count)
+            except Exception as e:
+                logger.exception("Error polling short calls for account %s: %s", account.id, e)
+
+        logger.info(
+            "Done. %d new recordings, %d missed calls, %d short answered calls.",
+            total_new, total_missed, total_short,
+        )
 
 
 if __name__ == "__main__":
