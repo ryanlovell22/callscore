@@ -1,4 +1,4 @@
-# CallScore
+# CallVerdict
 
 ## What It Is
 A SaaS app that pulls call recordings from Twilio, transcribes them using Twilio Conversational Intelligence, and uses AI to classify whether a job was booked. Results shown on a simple dashboard.
@@ -13,7 +13,7 @@ A SaaS app that pulls call recordings from Twilio, transcribes them using Twilio
 
 ## Project Structure
 ```
-callscore/
+callverdict/
 ├── app/
 │   ├── __init__.py          # Flask app factory
 │   ├── config.py            # Config from env vars

@@ -57,6 +57,8 @@ def create_app():
     from .upload import bp as upload_bp
     from .partners import bp as partners_bp
     from .settings import bp as settings_bp
+    from .landing import bp as landing_bp
+    from .billing import bp as billing_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -65,6 +67,11 @@ def create_app():
     app.register_blueprint(upload_bp)
     app.register_blueprint(partners_bp)
     app.register_blueprint(settings_bp)
+    app.register_blueprint(landing_bp)
+    app.register_blueprint(billing_bp)
+
+    from .shared import bp as shared_bp
+    app.register_blueprint(shared_bp)
 
     @app.route('/health')
     def health_check():

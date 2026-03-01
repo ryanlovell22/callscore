@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Billing — CallVerdict{% endblock %}
+
+{% block content %}
+<h2>Billing</h2>
+
+<article style="max-width: 600px;">
+    <h3>Current Plan</h3>
+    <p><strong>{{ account.stripe_plan | capitalize }}</strong>
+    {% if account.stripe_plan != 'free' %}
+     — {{ account.subscription_status | capitalize }}
+    {% endif %}
+    </p>
+
+    <h4>Usage This Period</h4>
+    <p>{{ account.plan_calls_used or 0 }} of {{ account.plan_calls_limit or 10 }} calls used</p>
+    <progress value="{{ account.plan_calls_used or 0 }}" max="{{ account.plan_calls_limit or 10 }}"></progress>
+
+    {% if account.plan_calls_used and account.plan_calls_limit and account.plan_calls_used >= account.plan_calls_limit %}
+    <p style="color: var(--pico-del-color);"><strong>You've reached your call limit.</strong> Upgrade to continue scoring calls.</p>
+    {% elif account.plan_calls_used and account.plan_calls_limit and account.plan_calls_used >= (account.plan_calls_limit * 0.8) %}
+    <p style="color: var(--pico-ins-color);">You're approaching your call limit. Consider upgrading.</p>
+    {% endif %}
+
+    {% if account.stripe_subscription_id %}
+    <a href="{{ url_for('billing.portal') }}" role="button" class="outline">Manage Subscription</a>
+    {% endif %}
+</article>
+
+{% if account.stripe_plan == 'free' or not account.stripe_subscription_id %}
+<h3>Upgrade Your Plan</h3>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; max-width: 800px;">
+    {% if account.stripe_plan != 'starter' %}
+    <article style="text-align: center;">
+        <h4>Starter</h4>
+        <p style="font-size: 1.5rem; font-weight: bold;">$29<small>/month</small></p>
+        <p>100 calls/month</p>
+        <form method="post" action="{{ url_for('billing.checkout') }}">
+            <input type="hidden" name="plan" value="starter">
+            <button type="submit">Upgrade</button>
+        </form>
+    </article>
+    {% endif %}
+
+    {% if account.stripe_plan != 'pro' %}
+    <article style="text-align: center;">
+        <h4>Pro</h4>
+        <p style="font-size: 1.5rem; font-weight: bold;">$79<small>/month</small></p>
+        <p>500 calls/month</p>
+        <form method="post" action="{{ url_for('billing.checkout') }}">
+            <input type="hidden" name="plan" value="pro">
+            <button type="submit">Upgrade</button>
+        </form>
+    </article>
+    {% endif %}
+
+    {% if account.stripe_plan != 'agency' %}
+    <article style="text-align: center;">
+        <h4>Agency</h4>
+        <p style="font-size: 1.5rem; font-weight: bold;">$149<small>/month</small></p>
+        <p>1,500 calls/month</p>
+        <form method="post" action="{{ url_for('billing.checkout') }}">
+            <input type="hidden" name="plan" value="agency">
+            <button type="submit">Upgrade</button>
+        </form>
+    </article>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

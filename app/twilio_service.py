@@ -1,4 +1,4 @@
-"""Twilio API helper functions for CallScore."""
+"""Twilio API helper functions for CallVerdict."""
 
 import json
 import logging
@@ -129,8 +129,8 @@ def create_ci_service(account_sid, auth_token, webhook_url=None):
     auth = get_auth(account_sid, auth_token)
 
     data = {
-        "UniqueName": "callscore",
-        "FriendlyName": "CallScore Job Classifier",
+        "UniqueName": "callverdict",
+        "FriendlyName": "CallVerdict Job Classifier",
         "AutoTranscribe": "false",
         "LanguageCode": "en-AU",
     }

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Partners — CallScore{% endblock %}
+{% block title %}Partners — CallVerdict{% endblock %}
 
 {% block content %}
 <h2>Partners</h2>
@@ -15,6 +15,7 @@
                 <th>Email</th>
                 <th>Assigned Lines</th>
                 <th>Created</th>
+                <th>Proof Links</th>
                 <th></th>
             </tr>
         </thead>
@@ -25,6 +26,7 @@
                 <td>{{ partner.email }}</td>
                 <td>{{ partner.tracking_lines | length }}</td>
                 <td>{{ partner.created_at.strftime('%d %b %Y') if partner.created_at else '—' }}</td>
+                <td><a href="{{ url_for('dashboard.shared_links') }}">Manage</a></td>
                 <td>
                     <form method="post" action="{{ url_for('partners.delete', partner_id=partner.id) }}" style="display:inline;">
                         <button type="submit" class="outline secondary" onclick="return confirm('Delete this partner? Their tracking lines will be unassigned.')">Delete</button>

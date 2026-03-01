@@ -10,6 +10,7 @@ from ..twilio_service import (
     create_ci_service,
     create_ci_operator,
 )
+from ..callrail_service import validate_callrail_credentials, fetch_callrail_accounts
 from . import bp
 
 logger = logging.getLogger(__name__)
@@ -97,6 +98,27 @@ def index():
     if connected:
         webhook_url = url_for("webhooks.twilio_ci_callback", _external=True)
 
+    # CallRail connection status
+    callrail_connected = bool(account.callrail_api_key_encrypted and account.callrail_account_id)
+    callrail_account_name = ""
+    if callrail_connected:
+        try:
+            cr_accounts = fetch_callrail_accounts(account.callrail_api_key_encrypted)
+            for cr_acct in cr_accounts:
+                if str(cr_acct["id"]) == str(account.callrail_account_id):
+                    callrail_account_name = cr_acct["name"]
+                    break
+        except Exception:
+            callrail_account_name = f"ID: {account.callrail_account_id}"
+
+    masked_callrail_key = ""
+    if account.callrail_api_key_encrypted:
+        masked_callrail_key = "••••" + account.callrail_api_key_encrypted[-4:]
+
+    callrail_webhook_url = ""
+    if callrail_connected:
+        callrail_webhook_url = url_for("webhooks.callrail_callback", _external=True)
+
     import pytz
     australian_timezones = [tz for tz in sorted(pytz.all_timezones) if tz.startswith('Australia/')]
 
@@ -106,10 +128,52 @@ def index():
         masked_token=masked_token,
         connected=connected,
         webhook_url=webhook_url,
+        callrail_connected=callrail_connected,
+        callrail_account_name=callrail_account_name,
+        callrail_webhook_url=callrail_webhook_url,
+        masked_callrail_key=masked_callrail_key,
         timezones=australian_timezones,
         current_timezone=account.timezone or "Australia/Adelaide",
         active_page="settings",
     )
+
+
+@bp.route("/callrail", methods=["POST"])
+@login_required
+@account_required
+def save_callrail():
+    account = current_user
+    api_key = request.form.get("callrail_api_key", "").strip()
+
+    # If the field is blank or matches the masked placeholder, keep existing
+    if not api_key or api_key.startswith("••••"):
+        flash("Please enter your CallRail API key.", "error")
+        return redirect(url_for("settings.index"))
+
+    # Validate credentials
+    if not validate_callrail_credentials(api_key):
+        flash("Invalid CallRail API key. Please check and try again.", "error")
+        return redirect(url_for("settings.index"))
+
+    # Fetch accounts to get the account ID
+    try:
+        accounts = fetch_callrail_accounts(api_key)
+    except Exception:
+        logger.exception("Failed to fetch CallRail accounts")
+        flash("API key is valid but failed to fetch accounts. Please try again.", "error")
+        return redirect(url_for("settings.index"))
+
+    if not accounts:
+        flash("No CallRail accounts found for this API key.", "error")
+        return redirect(url_for("settings.index"))
+
+    # If single account, save automatically; if multiple, use the first one
+    account.callrail_api_key_encrypted = api_key
+    account.callrail_account_id = str(accounts[0]["id"])
+    db.session.commit()
+
+    flash(f"CallRail connected — Account: {accounts[0]['name']}", "success")
+    return redirect(url_for("settings.index"))
 
 
 @bp.route("/timezone", methods=["POST"])

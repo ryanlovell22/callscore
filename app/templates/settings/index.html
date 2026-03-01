@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Settings — CallScore{% endblock %}
+{% block title %}Settings — CallVerdict{% endblock %}
 
 {% block content %}
 <h2>Settings</h2>
@@ -31,6 +31,22 @@
     {% endif %}
 </article>
 {% endif %}
+
+<article style="max-width: 600px;">
+    <h3>CallRail</h3>
+    <form method="post" action="{{ url_for('settings.save_callrail') }}">
+        <label for="callrail_api_key">API Key</label>
+        <input type="password" id="callrail_api_key" name="callrail_api_key"
+               value="{{ masked_callrail_key }}" placeholder="Paste your CallRail API key">
+        <button type="submit">Connect</button>
+    </form>
+    {% if callrail_connected %}
+    <p><mark>Connected</mark> — Account: {{ callrail_account_name }}</p>
+    <p><strong>Webhook URL (paste in CallRail → Settings → API → Webhooks):</strong></p>
+    <code>{{ callrail_webhook_url }}</code>
+    <p style="margin-top: 1rem;"><small>Set this as a "Post-call" webhook in CallRail to receive call data automatically.</small></p>
+    {% endif %}
+</article>
 
 <article style="max-width: 600px;">
     <h3>Timezone</h3>

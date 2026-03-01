@@ -18,6 +18,20 @@ class Account(UserMixin, db.Model):
     twilio_service_sid = db.Column(db.String(255))
     webhook_secret = db.Column(db.String(255))
     timezone = db.Column(db.String(50), default="Australia/Adelaide")
+    callrail_api_key_encrypted = db.Column(db.Text)
+    callrail_account_id = db.Column(db.String(50))
+    call_source = db.Column(db.String(20), default="twilio")  # "twilio" or "callrail"
+
+    # Stripe billing
+    stripe_customer_id = db.Column(db.String(255))
+    stripe_subscription_id = db.Column(db.String(255))
+    stripe_plan = db.Column(db.String(20), default="free")  # free/starter/pro/agency
+    plan_calls_limit = db.Column(db.Integer, default=10)
+    plan_calls_used = db.Column(db.Integer, default=0)
+    plan_period_start = db.Column(db.DateTime)
+    plan_period_end = db.Column(db.DateTime)
+    subscription_status = db.Column(db.String(20), default="active")  # active/past_due/cancelled
+
     created_at = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc)
     )
@@ -75,6 +89,8 @@ class TrackingLine(db.Model):
     account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"), nullable=False)
     partner_id = db.Column(db.Integer, db.ForeignKey("partners.id"), nullable=True)
     twilio_phone_number = db.Column(db.String(20))
+    callrail_tracker_id = db.Column(db.String(50))
+    callrail_tracking_number = db.Column(db.String(20))
     label = db.Column(db.String(255))
     partner_name = db.Column(db.String(255))
     partner_phone = db.Column(db.String(20))
@@ -92,6 +108,7 @@ class Call(db.Model):
     __table_args__ = (
         db.UniqueConstraint('account_id', 'twilio_call_sid', name='uq_call_account_call_sid'),
         db.UniqueConstraint('account_id', 'twilio_recording_sid', name='uq_call_account_recording_sid'),
+        db.UniqueConstraint('account_id', 'callrail_call_id', name='uq_call_account_callrail_id'),
         db.Index('ix_call_account_date', 'account_id', 'call_date'),
         db.Index('ix_call_account_line', 'account_id', 'tracking_line_id'),
     )
@@ -108,6 +125,7 @@ class Call(db.Model):
     call_date = db.Column(db.DateTime)
     recording_url = db.Column(db.Text)
     source = db.Column(db.String(20), default="twilio")
+    callrail_call_id = db.Column(db.String(50))
     retry_count = db.Column(db.Integer, default=0)
 
     call_outcome = db.Column(db.String(20), nullable=False, default="answered")
@@ -149,3 +167,24 @@ class Invoice(db.Model):
     created_at = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc)
     )
+
+
+class SharedDashboard(db.Model):
+    __tablename__ = "shared_dashboards"
+
+    id = db.Column(db.Integer, primary_key=True)
+    account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"), nullable=False)
+    tracking_line_id = db.Column(db.Integer, db.ForeignKey("tracking_lines.id"), nullable=True)
+    partner_id = db.Column(db.Integer, db.ForeignKey("partners.id"), nullable=True)
+    share_token = db.Column(db.String(64), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255))
+    active = db.Column(db.Boolean, default=True)
+    show_recordings = db.Column(db.Boolean, default=True)
+    show_transcripts = db.Column(db.Boolean, default=True)
+    created_at = db.Column(
+        db.DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+
+    account = db.relationship("Account", backref="shared_dashboards")
+    tracking_line = db.relationship("TrackingLine")
+    partner = db.relationship("Partner")

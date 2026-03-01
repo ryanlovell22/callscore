@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Call Proof Dashboard — CallVerdict</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+</head>
+<body>
+    <header class="container">
+        <nav>
+            <ul><li><strong>CallVerdict</strong></li></ul>
+            <ul><li><small>Proof Dashboard</small></li></ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <!-- Stats -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <article style="text-align: center;">
+                <h3 style="margin-bottom: 0;">{{ stats.total }}</h3>
+                <small>Total Calls</small>
+            </article>
+            <article style="text-align: center;">
+                <h3 style="margin-bottom: 0;">{{ stats.booked }}</h3>
+                <small>Jobs Booked</small>
+            </article>
+            <article style="text-align: center;">
+                <h3 style="margin-bottom: 0;">{{ stats.rate }}%</h3>
+                <small>Booking Rate</small>
+            </article>
+        </div>
+
+        <!-- Date filter -->
+        <form method="get" style="display: flex; gap: 1rem; align-items: end; margin-bottom: 1rem;">
+            <label style="margin: 0;">
+                From
+                <input type="date" name="date_from" value="{{ date_from }}">
+            </label>
+            <label style="margin: 0;">
+                To
+                <input type="date" name="date_to" value="{{ date_to }}">
+            </label>
+            <button type="submit" class="outline" style="margin-bottom: 0;">Filter</button>
+        </form>
+
+        <!-- Calls table -->
+        {% if calls %}
+        <figure>
+            <table role="grid">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Duration</th>
+                        <th>Classification</th>
+                        <th>Summary</th>
+                        {% if dashboard.show_transcripts %}
+                        <th></th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for call in calls %}
+                    <tr>
+                        <td>{{ call.call_date.strftime('%d %b %Y %H:%M') if call.call_date else '—' }}</td>
+                        <td>{{ '%d:%02d'|format(call.call_duration // 60, call.call_duration % 60) if call.call_duration else '—' }}</td>
+                        <td>
+                            {% if call.classification == 'JOB_BOOKED' %}
+                            <mark>Job Booked</mark>
+                            {% elif call.classification == 'NOT_BOOKED' %}
+                            Not Booked
+                            {% elif call.classification == 'VOICEMAIL' %}
+                            Voicemail
+                            {% else %}
+                            {{ call.status | capitalize }}
+                            {% endif %}
+                        </td>
+                        <td>{{ call.summary or '—' }}</td>
+                        {% if dashboard.show_transcripts %}
+                        <td><a href="/proof/{{ share_token }}/calls/{{ call.id }}">View</a></td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </figure>
+        {% else %}
+        <article>
+            <p>No calls found for this period.</p>
+        </article>
+        {% endif %}
+    </main>
+
+    <footer class="container">
+        <hr>
+        <small>Powered by <a href="/welcome">CallVerdict</a></small>
+    </footer>
+</body>
+</html>

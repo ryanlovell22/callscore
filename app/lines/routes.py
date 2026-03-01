@@ -1,7 +1,8 @@
 from flask import render_template, request, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
 
-from ..models import db, TrackingLine, Partner
+from ..models import db, TrackingLine, Partner, Account
+from ..callrail_service import fetch_callrail_trackers
 from . import bp
 
 
@@ -24,7 +25,70 @@ def index():
     lines = TrackingLine.query.filter_by(account_id=current_user.id).order_by(
         TrackingLine.label
     ).all()
-    return render_template("lines/index.html", lines=lines, active_page="lines")
+
+    # Check if CallRail is connected for import button
+    account = db.session.get(Account, current_user.id)
+    callrail_connected = bool(
+        account and account.callrail_api_key_encrypted and account.callrail_account_id
+    )
+
+    return render_template(
+        "lines/index.html",
+        lines=lines,
+        callrail_connected=callrail_connected,
+        active_page="lines",
+    )
+
+
+@bp.route("/import-callrail", methods=["POST"])
+@login_required
+@account_required
+def import_callrail():
+    account = db.session.get(Account, current_user.id)
+    if not account or not account.callrail_api_key_encrypted or not account.callrail_account_id:
+        flash("Connect CallRail in Settings first.", "error")
+        return redirect(url_for("lines.index"))
+
+    try:
+        trackers = fetch_callrail_trackers(
+            account.callrail_api_key_encrypted,
+            account.callrail_account_id,
+        )
+    except Exception:
+        flash("Failed to fetch tracking numbers from CallRail. Please try again.", "error")
+        return redirect(url_for("lines.index"))
+
+    imported = 0
+    skipped = 0
+    for tracker in trackers:
+        # Skip if already imported (by tracker ID)
+        existing = TrackingLine.query.filter_by(
+            account_id=current_user.id,
+            callrail_tracker_id=str(tracker["id"]),
+        ).first()
+        if existing:
+            skipped += 1
+            continue
+
+        line = TrackingLine(
+            account_id=current_user.id,
+            callrail_tracker_id=str(tracker["id"]),
+            callrail_tracking_number=tracker["tracking_phone_number"],
+            label=tracker["name"] or tracker["tracking_phone_number"],
+        )
+        db.session.add(line)
+        imported += 1
+
+    db.session.commit()
+
+    if imported:
+        flash(f"Imported {imported} tracking number(s) from CallRail.", "success")
+    if skipped:
+        flash(f"Skipped {skipped} already imported number(s).", "info")
+    if not imported and not skipped:
+        flash("No tracking numbers found in your CallRail account.", "info")
+
+    return redirect(url_for("lines.index"))
 
 
 @bp.route("/add", methods=["GET", "POST"])

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 import requests as http_requests
-from flask import render_template, request, redirect, url_for, flash, jsonify, Response
+from flask import render_template, request, redirect, url_for, flash, jsonify, Response, abort
 from flask_login import login_required, current_user
 
 from ..models import db, Call, TrackingLine, Account
@@ -273,5 +273,93 @@ def export_csv():
     return Response(
         output.getvalue(),
         mimetype='text/csv',
-        headers={'Content-Disposition': 'attachment; filename=callscore_export.csv'}
+        headers={'Content-Disposition': 'attachment; filename=callverdict_export.csv'}
     )
+
+
+@bp.route("/shared-links")
+@login_required
+def shared_links():
+    if current_user.user_type != "account":
+        abort(403)
+    from ..models import SharedDashboard
+    dashboards = SharedDashboard.query.filter_by(
+        account_id=current_user.id
+    ).order_by(SharedDashboard.created_at.desc()).all()
+
+    lines = TrackingLine.query.filter_by(
+        account_id=current_user.id, active=True
+    ).all()
+    from ..models import Partner
+    partners = Partner.query.filter_by(account_id=current_user.id).all()
+
+    return render_template(
+        "dashboard/shared_links.html",
+        dashboards=dashboards,
+        lines=lines,
+        partners=partners,
+        active_page="shared_links",
+    )
+
+
+@bp.route("/shared-links/create", methods=["POST"])
+@login_required
+def create_shared_link():
+    if current_user.user_type != "account":
+        abort(403)
+
+    import secrets
+    from werkzeug.security import generate_password_hash
+    from ..models import SharedDashboard
+
+    partner_id = request.form.get("partner_id", type=int) or None
+    line_id = request.form.get("line_id", type=int) or None
+    password = request.form.get("password", "").strip()
+    show_recordings = "show_recordings" in request.form
+    show_transcripts = "show_transcripts" in request.form
+
+    dashboard = SharedDashboard(
+        account_id=current_user.id,
+        partner_id=partner_id,
+        tracking_line_id=line_id,
+        share_token=secrets.token_urlsafe(32),
+        password_hash=generate_password_hash(password) if password else None,
+        show_recordings=show_recordings,
+        show_transcripts=show_transcripts,
+    )
+    db.session.add(dashboard)
+    db.session.commit()
+
+    flash("Shared link created.", "success")
+    return redirect(url_for("dashboard.shared_links"))
+
+
+@bp.route("/shared-links/<int:dashboard_id>/toggle", methods=["POST"])
+@login_required
+def toggle_shared_link(dashboard_id):
+    if current_user.user_type != "account":
+        abort(403)
+    from ..models import SharedDashboard
+    dashboard = SharedDashboard.query.filter_by(
+        id=dashboard_id, account_id=current_user.id
+    ).first_or_404()
+    dashboard.active = not dashboard.active
+    db.session.commit()
+    status = "enabled" if dashboard.active else "disabled"
+    flash(f"Shared link {status}.", "success")
+    return redirect(url_for("dashboard.shared_links"))
+
+
+@bp.route("/shared-links/<int:dashboard_id>/delete", methods=["POST"])
+@login_required
+def delete_shared_link(dashboard_id):
+    if current_user.user_type != "account":
+        abort(403)
+    from ..models import SharedDashboard
+    dashboard = SharedDashboard.query.filter_by(
+        id=dashboard_id, account_id=current_user.id
+    ).first_or_404()
+    db.session.delete(dashboard)
+    db.session.commit()
+    flash("Shared link deleted.", "success")
+    return redirect(url_for("dashboard.shared_links"))

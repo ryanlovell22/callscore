@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Shared Links — CallVerdict{% endblock %}
+
+{% block content %}
+<h2>Shared Proof Links</h2>
+
+<article style="max-width: 700px;">
+    <h3>Create New Link</h3>
+    <form method="post" action="{{ url_for('dashboard.create_shared_link') }}">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <label>
+                Partner (optional)
+                <select name="partner_id">
+                    <option value="">— All lines —</option>
+                    {% for partner in partners %}
+                    <option value="{{ partner.id }}">{{ partner.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Tracking Line (optional)
+                <select name="line_id">
+                    <option value="">— All lines —</option>
+                    {% for line in lines %}
+                    <option value="{{ line.id }}">{{ line.label or line.twilio_phone_number or line.callrail_tracking_number }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+        </div>
+        <label>
+            Password (optional)
+            <input type="text" name="password" placeholder="Leave blank for no password">
+        </label>
+        <fieldset>
+            <label><input type="checkbox" name="show_recordings" checked> Show recordings</label>
+            <label><input type="checkbox" name="show_transcripts" checked> Show transcripts</label>
+        </fieldset>
+        <button type="submit">Create Link</button>
+    </form>
+</article>
+
+{% if dashboards %}
+<h3>Existing Links</h3>
+<figure>
+    <table role="grid">
+        <thead>
+            <tr>
+                <th>Scope</th>
+                <th>Link</th>
+                <th>Password</th>
+                <th>Active</th>
+                <th>Created</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in dashboards %}
+            <tr>
+                <td>
+                    {% if d.partner %}
+                    Partner: {{ d.partner.name }}
+                    {% elif d.tracking_line %}
+                    Line: {{ d.tracking_line.label or d.tracking_line.twilio_phone_number }}
+                    {% else %}
+                    All lines
+                    {% endif %}
+                </td>
+                <td>
+                    <input type="text" value="{{ request.host_url }}proof/{{ d.share_token }}"
+                           readonly style="font-size: 0.8rem; margin: 0; padding: 0.25rem;"
+                           onclick="this.select();">
+                </td>
+                <td>{{ 'Yes' if d.password_hash else 'No' }}</td>
+                <td>{{ 'Yes' if d.active else 'No' }}</td>
+                <td>{{ d.created_at.strftime('%d %b %Y') if d.created_at else '—' }}</td>
+                <td style="white-space: nowrap;">
+                    <form method="post" action="{{ url_for('dashboard.toggle_shared_link', dashboard_id=d.id) }}" style="display:inline;">
+                        <button type="submit" class="outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                            {{ 'Disable' if d.active else 'Enable' }}
+                        </button>
+                    </form>
+                    <form method="post" action="{{ url_for('dashboard.delete_shared_link', dashboard_id=d.id) }}" style="display:inline;">
+                        <button type="submit" class="outline secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;"
+                                onclick="return confirm('Delete this shared link?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</figure>
+{% else %}
+<article>
+    <p>No shared links yet. Create one above to share call proof with your clients.</p>
+</article>
+{% endif %}
+{% endblock %}

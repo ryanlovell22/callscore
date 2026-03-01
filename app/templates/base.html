@@ -1,10 +1,10 @@
-<!-- CallScore v1.1 -->
+<!-- CallVerdict v1.1 -->
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}CallScore{% endblock %}</title>
+    <title>{% block title %}CallVerdict{% endblock %}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -12,7 +12,7 @@
     <header class="container">
         <nav>
             <ul>
-                <li><strong><a href="{{ url_for('dashboard.index') }}">CallScore</a></strong></li>
+                <li><strong><a href="{{ url_for('dashboard.index') }}">CallVerdict</a></strong></li>
             </ul>
             {% if current_user.is_authenticated %}
             <ul>
@@ -22,6 +22,8 @@
                 <li><a href="{{ url_for('partners.index') }}" {% if active_page == 'partners' %}aria-current="page"{% endif %}>Partners</a></li>
                 <li><a href="{{ url_for('upload.index') }}" {% if active_page == 'upload' %}aria-current="page"{% endif %}>Upload</a></li>
                 <li><a href="{{ url_for('settings.index') }}" {% if active_page == 'settings' %}aria-current="page"{% endif %}>Settings</a></li>
+                <li><a href="{{ url_for('billing.index') }}" {% if active_page == 'billing' %}aria-current="page"{% endif %}>Billing</a></li>
+                <li><a href="{{ url_for('dashboard.shared_links') }}" {% if active_page == 'shared_links' %}aria-current="page"{% endif %}>Shared Links</a></li>
                 {% endif %}
                 <li><a href="{{ url_for('auth.logout') }}">Log out</a></li>
             </ul>
@@ -49,7 +51,7 @@
     </main>
 
     <footer class="container">
-        <small>CallScore &copy; {{ now().year if now is defined else 2026 }}</small>
+        <small>CallVerdict &copy; {{ now().year if now is defined else 2026 }}</small>
     </footer>
 </body>
 </html>

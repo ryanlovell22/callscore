@@ -3,7 +3,7 @@ import os
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///callscore.db")
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///callverdict.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Fix Supabase/Railway postgres:// vs postgresql:// issue
@@ -19,6 +19,16 @@ class Config:
     # Supabase Storage (for manual uploads)
     SUPABASE_URL = os.environ.get("SUPABASE_URL")
     SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+
+    # Stripe
+    STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
+    STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY")
+    STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
+    STRIPE_PRICE_STARTER = os.environ.get("STRIPE_PRICE_STARTER")
+    STRIPE_PRICE_PRO = os.environ.get("STRIPE_PRICE_PRO")
+    STRIPE_PRICE_AGENCY = os.environ.get("STRIPE_PRICE_AGENCY")
 
     # Max upload size: 25MB
     MAX_CONTENT_LENGTH = 25 * 1024 * 1024

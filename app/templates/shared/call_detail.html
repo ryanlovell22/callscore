@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Call Detail — CallVerdict</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+</head>
+<body>
+    <header class="container">
+        <nav>
+            <ul><li><strong>CallVerdict</strong></li></ul>
+            <ul>
+                <li><a href="/proof/{{ share_token }}">&larr; Back to Dashboard</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container" style="max-width: 800px;">
+        <h2>Call Detail</h2>
+
+        <article>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <strong>Date:</strong>
+                    <p>{{ call.call_date.strftime('%d %b %Y %H:%M') if call.call_date else '—' }}</p>
+                </div>
+                <div>
+                    <strong>Duration:</strong>
+                    <p>{{ '%d:%02d'|format(call.call_duration // 60, call.call_duration % 60) if call.call_duration else '—' }}</p>
+                </div>
+                <div>
+                    <strong>Classification:</strong>
+                    <p>
+                        {% if call.classification == 'JOB_BOOKED' %}
+                        <mark>Job Booked</mark>
+                        {% elif call.classification == 'NOT_BOOKED' %}
+                        Not Booked
+                        {% elif call.classification == 'VOICEMAIL' %}
+                        Voicemail
+                        {% else %}
+                        {{ call.status | capitalize }}
+                        {% endif %}
+                        {% if call.confidence %}
+                        <small>({{ (call.confidence * 100)|int }}% confidence)</small>
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <strong>Service Type:</strong>
+                    <p>{{ call.service_type or '—' }}</p>
+                </div>
+                {% if call.customer_name %}
+                <div>
+                    <strong>Customer:</strong>
+                    <p>{{ call.customer_name }}</p>
+                </div>
+                {% endif %}
+                {% if call.booking_time %}
+                <div>
+                    <strong>Booking Time:</strong>
+                    <p>{{ call.booking_time }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </article>
+
+        {% if call.summary %}
+        <article>
+            <h3>Summary</h3>
+            <p>{{ call.summary }}</p>
+        </article>
+        {% endif %}
+
+        {% if dashboard.show_transcripts and call.full_transcript %}
+        <article>
+            <h3>Transcript</h3>
+            <pre style="white-space: pre-wrap; font-size: 0.9rem;">{{ call.full_transcript }}</pre>
+        </article>
+        {% endif %}
+
+        {% if dashboard.show_recordings and call.recording_url %}
+        <article>
+            <h3>Recording</h3>
+            <p><em>Recording playback is not available on public links.</em></p>
+        </article>
+        {% endif %}
+    </main>
+
+    <footer class="container">
+        <hr>
+        <small>Powered by <a href="/welcome">CallVerdict</a></small>
+    </footer>
+</body>
+</html>

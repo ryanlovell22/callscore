@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CallVerdict — AI Call Classification for Lead Gen Operators</title>
+    <meta name="description" content="Automatically score every call as Job Booked or Not Booked. Built for rank-and-rent and lead gen operators using CallRail or Twilio.">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+
+    <!-- Schema.org SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "CallVerdict",
+        "description": "AI-powered call scoring for lead generation operators. Automatically classifies calls as Job Booked or Not Booked.",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "offers": [
+            {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free — 10 calls/month"},
+            {"@type": "Offer", "price": "29", "priceCurrency": "USD", "description": "Starter — 100 calls/month"},
+            {"@type": "Offer", "price": "79", "priceCurrency": "USD", "description": "Pro — 500 calls/month"},
+            {"@type": "Offer", "price": "149", "priceCurrency": "USD", "description": "Agency — 1,500 calls/month"}
+        ]
+    }
+    </script>
+
+    <style>
+        /* Landing page specific styles */
+        .hero { text-align: center; padding: 3rem 0; }
+        .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        .hero p { font-size: 1.2rem; color: var(--pico-muted-color); margin-bottom: 2rem; }
+
+        .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; text-align: center; }
+        .steps article { padding: 1.5rem; }
+        .step-number { display: inline-block; width: 2.5rem; height: 2.5rem; line-height: 2.5rem; border-radius: 50%; background: var(--pico-primary-background); color: white; font-weight: bold; margin-bottom: 1rem; }
+
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+        .pricing-grid article { text-align: center; }
+        .pricing-grid .price { font-size: 2rem; font-weight: bold; }
+        .pricing-grid .period { color: var(--pico-muted-color); }
+        .popular { border: 2px solid var(--pico-primary-background); }
+
+        .cta-section { text-align: center; padding: 3rem 0; }
+
+        section { padding: 2rem 0; }
+        section h2 { text-align: center; margin-bottom: 2rem; }
+    </style>
+</head>
+<body>
+    <!-- Nav -->
+    <header class="container">
+        <nav>
+            <ul><li><strong>CallVerdict</strong></li></ul>
+            <ul>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="/auth/login">Log in</a></li>
+                <li><a href="/auth/signup" role="button">Start Free</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <!-- Hero -->
+        <section class="hero">
+            <h1>Know exactly which calls booked a job.</h1>
+            <p>AI-powered call scoring for rank-and-rent and lead gen operators. Works with CallRail and Twilio.</p>
+            <a href="/auth/signup" role="button" style="font-size: 1.1rem; padding: 0.75rem 2rem;">Start Free — No Card Required</a>
+        </section>
+
+        <!-- Pain point -->
+        <section>
+            <h2>Tired of clients disputing your leads?</h2>
+            <div class="features">
+                <article>
+                    <h3>No more he-said-she-said</h3>
+                    <p>Every call is transcribed and scored automatically. You have proof of exactly what happened.</p>
+                </article>
+                <article>
+                    <h3>Stop manually listening to calls</h3>
+                    <p>AI analyses every call in seconds. No more spending hours reviewing recordings to figure out what booked.</p>
+                </article>
+                <article>
+                    <h3>Bill with confidence</h3>
+                    <p>Show your clients a dashboard with scored calls, transcripts, and booking details. Disputes drop to zero.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- How it works -->
+        <section>
+            <h2>How it works</h2>
+            <div class="steps">
+                <article>
+                    <div class="step-number">1</div>
+                    <h3>Connect</h3>
+                    <p>Link your CallRail or Twilio account in under 2 minutes.</p>
+                </article>
+                <article>
+                    <div class="step-number">2</div>
+                    <h3>We score every call</h3>
+                    <p>AI transcribes and classifies each call as Job Booked, Not Booked, or Voicemail.</p>
+                </article>
+                <article>
+                    <div class="step-number">3</div>
+                    <h3>See results instantly</h3>
+                    <p>View your dashboard with booking rates, call summaries, and exportable reports.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section id="features">
+            <h2>Features</h2>
+            <div class="features">
+                <article>
+                    <h3>AI Classification</h3>
+                    <p>Every call scored as Job Booked, Not Booked, or Voicemail with confidence scores.</p>
+                </article>
+                <article>
+                    <h3>Full Transcripts</h3>
+                    <p>Read what was said on every call. No need to listen to recordings.</p>
+                </article>
+                <article>
+                    <h3>Partner Logins</h3>
+                    <p>Give your clients their own login to see their calls. View-only access to assigned lines.</p>
+                </article>
+                <article>
+                    <h3>Shareable Proof Links</h3>
+                    <p>Send your client a link showing their scored calls. No login required. Password-protect if needed.</p>
+                </article>
+                <article>
+                    <h3>CallRail + Twilio</h3>
+                    <p>Works with the tools you already use. Connect in minutes, not hours.</p>
+                </article>
+                <article>
+                    <h3>CSV Export</h3>
+                    <p>Export your call data anytime. Filter by date, line, or classification.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- Pricing -->
+        <section id="pricing">
+            <h2>Simple, transparent pricing</h2>
+            <div class="pricing-grid">
+                <article>
+                    <h3>Free</h3>
+                    <p class="price">$0</p>
+                    <p class="period">forever</p>
+                    <hr>
+                    <p>10 calls/month</p>
+                    <p>1 tracking line</p>
+                    <p>AI scoring + transcripts</p>
+                    <a href="/auth/signup" role="button" class="outline">Get Started</a>
+                </article>
+                <article class="popular">
+                    <h3>Starter</h3>
+                    <p class="price">$29</p>
+                    <p class="period">/month</p>
+                    <hr>
+                    <p>100 calls/month</p>
+                    <p>Unlimited lines</p>
+                    <p>Partner logins</p>
+                    <a href="/auth/signup" role="button">Start Free Trial</a>
+                </article>
+                <article>
+                    <h3>Pro</h3>
+                    <p class="price">$79</p>
+                    <p class="period">/month</p>
+                    <hr>
+                    <p>500 calls/month</p>
+                    <p>Unlimited lines</p>
+                    <p>Shareable proof links</p>
+                    <a href="/auth/signup" role="button" class="outline">Start Free Trial</a>
+                </article>
+                <article>
+                    <h3>Agency</h3>
+                    <p class="price">$149</p>
+                    <p class="period">/month</p>
+                    <hr>
+                    <p>1,500 calls/month</p>
+                    <p>Unlimited everything</p>
+                    <p>Priority support</p>
+                    <a href="/auth/signup" role="button" class="outline">Start Free Trial</a>
+                </article>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta-section">
+            <h2>Ready to stop guessing which calls booked?</h2>
+            <p>Start scoring your calls in under 5 minutes. Free plan included.</p>
+            <a href="/auth/signup" role="button" style="font-size: 1.1rem; padding: 0.75rem 2rem;">Create Your Free Account</a>
+        </section>
+    </main>
+
+    <footer class="container">
+        <hr>
+        <small>CallVerdict &copy; 2026 | <a href="/auth/login">Log in</a> | <a href="/auth/signup">Sign up</a></small>
+    </footer>
+</body>
+</html>
