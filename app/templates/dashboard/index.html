@@ -20,16 +20,16 @@
         <p>Not Booked</p>
     </article>
     <article>
+        <h3 style="color: var(--pico-color-orange-500, orange);">{{ stats.missed }}</h3>
+        <p>Missed Calls</p>
+    </article>
+    <article>
         <h3>{{ stats.rate }}%</h3>
         <p>Conversion</p>
     </article>
     <article>
         <h3>${{ "%.2f"|format(stats.total_value) }}</h3>
         <p>{% if current_user.user_type == 'partner' %}Lead Cost{% else %}Lead Value{% endif %}</p>
-    </article>
-    <article>
-        <h3 style="color: var(--pico-color-orange-500, orange);">{{ stats.missed }}</h3>
-        <p>Missed Calls</p>
     </article>
 </div>
 
