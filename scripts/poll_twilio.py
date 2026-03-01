@@ -2,8 +2,12 @@
 
 Run every 5 minutes via Railway Cron Jobs:
     python scripts/poll_twilio.py
+
+One-time backfill (e.g. recover missed calls from last 7 days):
+    python scripts/poll_twilio.py --days 7
 """
 
+import argparse
 import os
 import sys
 import logging
@@ -22,8 +26,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Default lookback: 24 hours (covers cron gaps, Railway restarts, etc.)
+# The dedup logic prevents double-processing.
+DEFAULT_LOOKBACK_HOURS = 24
 
-def poll_account(account):
+# Minimum recording duration to process (seconds).
+# Below this threshold, calls are likely accidental dials or instant hangups.
+MIN_RECORDING_SECONDS = 3
+
+
+def poll_account(account, since):
     """Fetch new recordings for an account and submit them to CI."""
     if not account.twilio_account_sid or not account.twilio_auth_token_encrypted:
         logger.info("Account %s: No Twilio credentials, skipping", account.id)
@@ -32,9 +44,6 @@ def poll_account(account):
     if not account.twilio_service_sid:
         logger.info("Account %s: No CI service configured, skipping", account.id)
         return 0
-
-    # Look for recordings from the last 10 minutes (overlap to avoid gaps)
-    since = datetime.now(timezone.utc) - timedelta(minutes=10)
 
     logger.info(
         "Account %s: Fetching recordings since %s", account.id, since.isoformat()
@@ -60,8 +69,8 @@ def poll_account(account):
         call_sid = rec.get("call_sid")
         duration = int(rec.get("duration", 0))
 
-        # Skip very short calls (< 10 seconds — likely hangups)
-        if duration < 10:
+        # Skip very short recordings (likely accidental dials)
+        if duration < MIN_RECORDING_SECONDS:
             continue
 
         # Get call details to find the phone numbers
@@ -142,12 +151,10 @@ def poll_account(account):
     return new_count
 
 
-def poll_missed_calls(account):
+def poll_missed_calls(account, since):
     """Fetch missed calls (no-answer, busy, canceled) and create records."""
     if not account.twilio_account_sid or not account.twilio_auth_token_encrypted:
         return 0
-
-    since = datetime.now(timezone.utc) - timedelta(minutes=10)
 
     logger.info(
         "Account %s: Fetching missed calls since %s", account.id, since.isoformat()
@@ -210,6 +217,21 @@ def poll_missed_calls(account):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Poll Twilio for new calls")
+    parser.add_argument(
+        "--days",
+        type=int,
+        default=None,
+        help="Lookback period in days (for backfill). Default: 24 hours.",
+    )
+    args = parser.parse_args()
+
+    if args.days:
+        since = datetime.now(timezone.utc) - timedelta(days=args.days)
+        logger.info("Backfill mode: looking back %d days", args.days)
+    else:
+        since = datetime.now(timezone.utc) - timedelta(hours=DEFAULT_LOOKBACK_HOURS)
+
     app = create_app()
     with app.app_context():
         accounts = Account.query.filter(
@@ -222,7 +244,7 @@ def main():
         total_missed = 0
         for account in accounts:
             try:
-                count = poll_account(account)
+                count = poll_account(account, since)
                 total_new += count
                 if count:
                     logger.info("Account %s: %d new recordings", account.id, count)
@@ -230,7 +252,7 @@ def main():
                 logger.exception("Error polling account %s: %s", account.id, e)
 
             try:
-                missed_count = poll_missed_calls(account)
+                missed_count = poll_missed_calls(account, since)
                 total_missed += missed_count
                 if missed_count:
                     logger.info("Account %s: %d missed calls", account.id, missed_count)
