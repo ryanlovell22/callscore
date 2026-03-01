@@ -99,6 +99,8 @@
                 <td>
                     {% if call.classification == 'JOB_BOOKED' %}
                         <mark style="background: var(--pico-color-green-100, #d4edda); color: var(--pico-color-green-700, #155724);">Booked</mark>
+                    {% elif call.classification == 'VOICEMAIL' %}
+                        <mark style="background: var(--pico-color-orange-100, #fff3cd); color: var(--pico-color-orange-700, #856404);">Voicemail</mark>
                     {% elif call.classification == 'NOT_BOOKED' %}
                         <mark style="background: var(--pico-color-red-100, #f8d7da); color: var(--pico-color-red-700, #721c24);">Not Booked</mark>
                     {% elif call.status == 'processing' %}

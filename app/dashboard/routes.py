@@ -56,10 +56,13 @@ def index():
     except ValueError:
         pass
 
-    # Missed calls count (respects same filters)
-    missed = query.filter(Call.call_outcome == "missed").count()
+    # Missed calls count: includes 0-second missed AND voicemails
+    missed = query.filter(
+        Call.call_outcome.in_(["missed", "voicemail"])
+    ).count()
 
-    # Answered calls only for the table (excludes missed)
+    # Table: show answered + voicemail calls (voicemails have useful transcripts).
+    # Exclude only true missed calls (0-second, no recording, nothing to show).
     calls = query.filter(Call.call_outcome != "missed").order_by(Call.call_date.desc()).all()
 
     if current_user.user_type == "partner":

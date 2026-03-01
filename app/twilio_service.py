@@ -165,25 +165,36 @@ def create_ci_operator(account_sid, auth_token, service_sid):
             "providing or agreeing to text their address, or any clear "
             "commitment to proceed.\n\n"
             "NOT_BOOKED - No job was booked. This includes: general enquiries "
-            "without commitment, voicemails, wrong numbers, price shopping "
+            "without commitment, wrong numbers, price shopping "
             "without booking, spam/robocalls, or calls where the customer "
             "said they would think about it.\n\n"
+            "VOICEMAIL - The customer left a voicemail message. Only one "
+            "person is speaking (the customer) and there is no live "
+            "conversation. The recording is a message left after a beep or "
+            "automated greeting.\n\n"
             "Also extract:\n"
             "- A brief one-sentence summary of the call\n"
             "- The service type discussed (e.g. lockout, rekey, tow, painting)\n"
-            "- Whether the customer mentioned urgency (same day, emergency)"
+            "- Whether the customer mentioned urgency (same day, emergency)\n"
+            "- The customer's name if they mention it\n"
+            "- The customer's address if they mention it\n"
+            "- The booking time if a job was booked (e.g. 'tomorrow morning', "
+            "'Wednesday 2pm', 'this afternoon')"
         ),
         "json_result_schema": {
             "type": "object",
             "properties": {
                 "classification": {
                     "type": "string",
-                    "enum": ["JOB_BOOKED", "NOT_BOOKED"],
+                    "enum": ["JOB_BOOKED", "NOT_BOOKED", "VOICEMAIL"],
                 },
                 "confidence": {"type": "number"},
                 "summary": {"type": "string"},
                 "service_type": {"type": "string"},
                 "urgent": {"type": "boolean"},
+                "customer_name": {"type": "string"},
+                "customer_address": {"type": "string"},
+                "booking_time": {"type": "string"},
             },
             "required": ["classification", "summary"],
         },

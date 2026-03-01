@@ -51,6 +51,10 @@ def twilio_ci_callback():
             call.customer_address = operator_results.get("customer_address")
             call.booking_time = operator_results.get("booking_time")
 
+            # Voicemail calls are missed from the partner's perspective
+            if call.classification == "VOICEMAIL":
+                call.call_outcome = "voicemail"
+
         # Fetch full transcript text
         transcript_text = fetch_transcript_text(
             account.twilio_account_sid,
