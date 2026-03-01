@@ -17,6 +17,7 @@ class Account(UserMixin, db.Model):
     twilio_auth_token_encrypted = db.Column(db.Text)
     twilio_service_sid = db.Column(db.String(255))
     webhook_secret = db.Column(db.String(255))
+    timezone = db.Column(db.String(50), default="Australia/Adelaide")
     created_at = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc)
     )
@@ -88,6 +89,12 @@ class TrackingLine(db.Model):
 
 class Call(db.Model):
     __tablename__ = "calls"
+    __table_args__ = (
+        db.UniqueConstraint('account_id', 'twilio_call_sid', name='uq_call_account_call_sid'),
+        db.UniqueConstraint('account_id', 'twilio_recording_sid', name='uq_call_account_recording_sid'),
+        db.Index('ix_call_account_date', 'account_id', 'call_date'),
+        db.Index('ix_call_account_line', 'account_id', 'tracking_line_id'),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"), nullable=False)
@@ -101,6 +108,7 @@ class Call(db.Model):
     call_date = db.Column(db.DateTime)
     recording_url = db.Column(db.Text)
     source = db.Column(db.String(20), default="twilio")
+    retry_count = db.Column(db.Integer, default=0)
 
     call_outcome = db.Column(db.String(20), nullable=False, default="answered")
 

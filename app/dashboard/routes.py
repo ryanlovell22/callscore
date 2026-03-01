@@ -1,3 +1,5 @@
+import csv
+import io
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
@@ -193,4 +195,74 @@ def call_recording(call_id):
         resp.iter_content(chunk_size=8192),
         content_type="audio/mpeg",
         headers={"Content-Disposition": "inline"},
+    )
+
+
+@bp.route("/export")
+@login_required
+def export_csv():
+    """Export filtered calls as CSV."""
+    line_id = request.args.get("line", type=int)
+    classification = request.args.get("classification")
+    date_from = request.args.get("date_from")
+    date_to = request.args.get("date_to")
+
+    # Default to current week
+    today = datetime.now(timezone.utc).date()
+    monday = today - timedelta(days=today.weekday())
+    sunday = monday + timedelta(days=6)
+    if not date_from:
+        date_from = monday.strftime("%Y-%m-%d")
+    if not date_to:
+        date_to = sunday.strftime("%Y-%m-%d")
+
+    # Build query (same logic as index)
+    if current_user.user_type == "partner":
+        account_id = current_user.account_id
+        partner_line_ids = [l.id for l in current_user.tracking_lines]
+        query = Call.query.filter(
+            Call.account_id == account_id,
+            Call.tracking_line_id.in_(partner_line_ids)
+        )
+    else:
+        account_id = current_user.id
+        query = Call.query.filter_by(account_id=account_id)
+
+    if line_id:
+        query = query.filter_by(tracking_line_id=line_id)
+    if classification and classification in ("JOB_BOOKED", "NOT_BOOKED"):
+        query = query.filter_by(classification=classification)
+    try:
+        dt_from = datetime.strptime(date_from, "%Y-%m-%d")
+        query = query.filter(Call.call_date >= dt_from)
+    except ValueError:
+        pass
+    try:
+        dt_to = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1)
+        query = query.filter(Call.call_date < dt_to)
+    except ValueError:
+        pass
+
+    calls = query.filter(Call.call_outcome != "missed").order_by(Call.call_date.desc()).all()
+
+    # Build CSV
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Date", "Line", "Caller", "Customer", "Duration", "Classification", "Booking Time", "Summary"])
+    for call in calls:
+        writer.writerow([
+            call.call_date.strftime('%d %b %Y %H:%M') if call.call_date else '',
+            call.tracking_line.label if call.tracking_line else '',
+            call.caller_number or '',
+            call.customer_name or '',
+            f"{call.call_duration // 60}:{call.call_duration % 60:02d}" if call.call_duration else '',
+            call.classification or call.status,
+            call.booking_time or '',
+            call.summary or '',
+        ])
+
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=callscore_export.csv'}
     )

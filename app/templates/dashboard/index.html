@@ -71,6 +71,8 @@
     </form>
 </details>
 
+<p><a href="{{ url_for('dashboard.export_csv', **filters) }}">Export CSV</a></p>
+
 <!-- Calls Table -->
 {% if calls %}
 <figure>
@@ -91,7 +93,7 @@
         <tbody>
             {% for call in calls %}
             <tr>
-                <td>{{ call.call_date.strftime('%d %b %Y %H:%M') if call.call_date else '—' }}</td>
+                <td>{{ call.call_date|localtime }}</td>
                 <td>{{ call.tracking_line.label if call.tracking_line else '—' }}</td>
                 <td>{{ call.caller_number or '—' }}</td>
                 <td>{{ call.customer_name or '—' }}</td>

@@ -31,6 +31,25 @@ def create_app():
     login_manager.init_app(app)
     migrate.init_app(app, db)
 
+    import pytz
+
+    @app.template_filter('localtime')
+    def localtime_filter(value, fmt='%d %b %Y %H:%M'):
+        if value is None:
+            return '\u2014'
+        try:
+            from flask_login import current_user
+            tz_name = getattr(current_user, 'timezone', None) or 'Australia/Adelaide'
+            if current_user.user_type == 'partner':
+                account = db.session.get(Account, current_user.account_id)
+                tz_name = account.timezone if account else tz_name
+            local_tz = pytz.timezone(tz_name)
+        except Exception:
+            local_tz = pytz.timezone('Australia/Adelaide')
+        if value.tzinfo is None:
+            value = pytz.utc.localize(value)
+        return value.astimezone(local_tz).strftime(fmt)
+
     from .auth import bp as auth_bp
     from .dashboard import bp as dashboard_bp
     from .lines import bp as lines_bp
@@ -46,5 +65,14 @@ def create_app():
     app.register_blueprint(upload_bp)
     app.register_blueprint(partners_bp)
     app.register_blueprint(settings_bp)
+
+    @app.route('/health')
+    def health_check():
+        try:
+            from sqlalchemy import text
+            db.session.execute(text('SELECT 1'))
+            return {'status': 'healthy'}, 200
+        except Exception as e:
+            return {'status': 'unhealthy', 'error': str(e)}, 500
 
     return app

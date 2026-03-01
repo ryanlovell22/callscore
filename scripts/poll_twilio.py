@@ -312,6 +312,49 @@ def poll_short_answered_calls(account, since):
     return new_count
 
 
+def retry_failed_submissions(account):
+    """Re-submit failed CI submissions (up to 3 retries, Twilio calls only)."""
+    if not account.twilio_account_sid or not account.twilio_auth_token_encrypted:
+        return 0
+    if not account.twilio_service_sid:
+        return 0
+
+    failed_calls = Call.query.filter_by(
+        account_id=account.id,
+        status="failed",
+        source="twilio",
+    ).filter(Call.retry_count < 3).all()
+
+    retried = 0
+    for call in failed_calls:
+        if not call.recording_url:
+            continue
+
+        call.retry_count = (call.retry_count or 0) + 1
+        try:
+            transcript_sid = submit_recording_to_ci(
+                account.twilio_account_sid,
+                account.twilio_auth_token_encrypted,
+                account.twilio_service_sid,
+                call.recording_url,
+            )
+            call.transcript_sid = transcript_sid
+            call.status = "processing"
+            logger.info(
+                "Retry %d succeeded for call %s → transcript %s",
+                call.retry_count, call.id, transcript_sid,
+            )
+        except Exception as e:
+            logger.warning(
+                "Retry %d failed for call %s: %s",
+                call.retry_count, call.id, e,
+            )
+        retried += 1
+
+    db.session.commit()
+    return retried
+
+
 def main():
     parser = argparse.ArgumentParser(description="Poll Twilio for new calls")
     parser.add_argument(
@@ -339,6 +382,7 @@ def main():
         total_new = 0
         total_missed = 0
         total_short = 0
+        total_retried = 0
         for account in accounts:
             try:
                 count = poll_account(account, since)
@@ -364,9 +408,17 @@ def main():
             except Exception as e:
                 logger.exception("Error polling short calls for account %s: %s", account.id, e)
 
+            try:
+                retried_count = retry_failed_submissions(account)
+                total_retried += retried_count
+                if retried_count:
+                    logger.info("Account %s: retried %d failed submissions", account.id, retried_count)
+            except Exception as e:
+                logger.exception("Error retrying failed submissions for account %s: %s", account.id, e)
+
         logger.info(
-            "Done. %d new recordings, %d missed calls, %d short answered calls.",
-            total_new, total_missed, total_short,
+            "Done. %d new recordings, %d missed calls, %d short answered calls, %d retried.",
+            total_new, total_missed, total_short, total_retried,
         )
 
 

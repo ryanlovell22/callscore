@@ -26,8 +26,8 @@ def twilio_ci_callback():
     # Find the call record by transcript_sid
     call = Call.query.filter_by(transcript_sid=transcript_sid).first()
     if not call:
-        logger.warning("No call found for transcript_sid=%s", transcript_sid)
-        return jsonify({"error": "Call not found"}), 404
+        logger.warning("No call found for transcript_sid=%s (will retry)", transcript_sid)
+        return jsonify({"status": "accepted, will retry"}), 202
 
     account = db.session.get(Account, call.account_id)
     if not account or not account.twilio_account_sid:
@@ -77,5 +77,5 @@ def twilio_ci_callback():
         logger.exception("Error processing webhook for transcript %s", transcript_sid)
         call.status = "failed"
         db.session.commit()
-        # Return 200 so Twilio doesn't retry endlessly
-        return jsonify({"error": str(e)}), 200
+        # Return 500 so Twilio retries on genuine errors
+        return jsonify({"error": str(e)}), 500
