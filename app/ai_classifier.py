@@ -52,7 +52,11 @@ CLASSIFICATION_PROMPT = (
     "if they mention it\n"
     "- The customer's address if they mention it\n"
     "- The booking time if a job was booked (e.g. 'tomorrow morning', "
-    "'Wednesday 2pm', 'this afternoon')"
+    "'Wednesday 2pm', 'this afternoon')\n"
+    "- The resolved booking date/time in ISO 8601 format "
+    "(YYYY-MM-DDTHH:MM:SS) if a job was booked and the call date is "
+    "provided. Resolve relative references like 'next Tuesday' or "
+    "'tomorrow' based on the call date."
 )
 
 CLASSIFICATION_SCHEMA = {
@@ -69,6 +73,14 @@ CLASSIFICATION_SCHEMA = {
         "customer_name": {"type": "string"},
         "customer_address": {"type": "string"},
         "booking_time": {"type": "string"},
+        "booking_date": {
+            "type": "string",
+            "description": (
+                "The resolved booking date/time in ISO 8601 format "
+                "(YYYY-MM-DDTHH:MM:SS). Resolve relative references like "
+                "'next Tuesday' or 'tomorrow' based on the call date provided."
+            ),
+        },
     },
     "required": ["classification", "summary"],
 }
@@ -131,21 +143,28 @@ def transcribe_recording(recording_url):
             os.unlink(tmp_path)
 
 
-def classify_transcript(transcript_text, business_name=None):
+def classify_transcript(transcript_text, business_name=None, call_date=None):
     """Classify a call transcript using GPT-4o-mini.
 
     Args:
         transcript_text: The full transcript text to classify.
         business_name: Optional business/tradie name answering the calls.
             When provided, helps the AI distinguish the tradie from the customer.
+        call_date: Optional datetime of when the call took place.
+            When provided, the AI resolves relative booking references
+            (e.g. "next Tuesday") to actual dates.
 
     Returns:
         Dict with classification, confidence, summary, service_type,
-        urgent, customer_name, customer_address, booking_time.
+        urgent, customer_name, customer_address, booking_time, booking_date.
     """
     client = _get_openai_client()
 
     user_content = ""
+    if call_date:
+        user_content += (
+            f"This call took place on {call_date.strftime('%A, %-d %B %Y')}.\n\n"
+        )
     if business_name:
         user_content += (
             f'The business answering these calls is "{business_name}". '
@@ -187,6 +206,7 @@ def classify_transcript(transcript_text, business_name=None):
             "customer_name": result.get("customer_name"),
             "customer_address": result.get("customer_address"),
             "booking_time": result.get("booking_time"),
+            "booking_date": result.get("booking_date"),
         }
 
     except Exception:

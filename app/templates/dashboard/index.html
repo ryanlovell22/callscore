@@ -123,7 +123,7 @@
                         <mark>Pending</mark>
                     {% endif %}
                 </td>
-                <td>{{ call.booking_time or '—' }}</td>
+                <td>{{ call.booking_date|localtime if call.booking_date else (call.booking_time or '—') }}</td>
                 <td>{{ call.summary[:80] + '...' if call.summary and call.summary|length > 80 else call.summary or '—' }}</td>
                 <td><a href="{{ url_for('dashboard.call_detail', call_id=call.id) }}">View</a></td>
             </tr>

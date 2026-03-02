@@ -145,6 +145,7 @@ class Call(db.Model):
     customer_name = db.Column(db.String(255))
     customer_address = db.Column(db.Text)
     booking_time = db.Column(db.String(255))
+    booking_date = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc)
     )

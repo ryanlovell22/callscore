@@ -14,6 +14,17 @@ from . import bp
 
 logger = logging.getLogger(__name__)
 
+
+def _parse_booking_date(value):
+    """Parse an ISO 8601 booking_date string into a datetime, or None."""
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except (ValueError, TypeError):
+        return None
+
+
 ALLOWED_EXTENSIONS = {"wav", "mp3", "m4a", "ogg", "mp4"}
 
 
@@ -60,11 +71,12 @@ def _process_uploads(file_tasks, account_id, has_twilio, app):
 
                     tracking_line = call.tracking_line
                     biz_name = (tracking_line.label or tracking_line.partner_name) if tracking_line else None
-                    result = classify_transcript(transcript.text, business_name=biz_name)
+                    result = classify_transcript(transcript.text, business_name=biz_name, call_date=call.call_date)
                     call.classification = result.get("classification")
                     call.summary = result.get("summary")
                     call.customer_name = result.get("customer_name")
                     call.booking_time = result.get("booking_time")
+                    call.booking_date = _parse_booking_date(result.get("booking_date"))
                     call.status = "complete"
                     db.session.commit()
 

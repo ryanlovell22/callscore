@@ -205,6 +205,14 @@ def create_ci_operator(account_sid, auth_token, service_sid):
                 "customer_name": {"type": "string"},
                 "customer_address": {"type": "string"},
                 "booking_time": {"type": "string"},
+                "booking_date": {
+                    "type": "string",
+                    "description": (
+                        "The resolved booking date/time in ISO 8601 format "
+                        "(YYYY-MM-DDTHH:MM:SS). Resolve relative references "
+                        "like 'next Tuesday' or 'tomorrow' based on the call date."
+                    ),
+                },
             },
             "required": ["classification", "summary"],
         },
@@ -355,6 +363,7 @@ def fetch_operator_results(account_sid, auth_token, transcript_sid):
         "customer_name": extracted.get("customer_name"),
         "customer_address": extracted.get("customer_address"),
         "booking_time": extracted.get("booking_time"),
+        "booking_date": extracted.get("booking_date"),
     }
 
 

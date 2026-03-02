@@ -57,10 +57,10 @@
                     <p>{{ call.customer_name }}</p>
                 </div>
                 {% endif %}
-                {% if call.booking_time %}
+                {% if call.booking_date or call.booking_time %}
                 <div>
                     <strong>Booking Time:</strong>
-                    <p>{{ call.booking_time }}</p>
+                    <p>{{ call.booking_date.strftime('%A, %-d %B %Y at %-I:%M %p') if call.booking_date else call.booking_time }}</p>
                 </div>
                 {% endif %}
             </div>

@@ -12,6 +12,16 @@ from . import bp
 logger = logging.getLogger(__name__)
 
 
+def _parse_booking_date(value):
+    """Parse an ISO 8601 booking_date string into a datetime, or None."""
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except (ValueError, TypeError):
+        return None
+
+
 def _check_usage_limit(account):
     """Check if account has reached their call processing limit.
     Returns True if limit reached, False if OK to process.
@@ -75,6 +85,7 @@ def twilio_ci_callback():
             call.customer_name = operator_results.get("customer_name")
             call.customer_address = operator_results.get("customer_address")
             call.booking_time = operator_results.get("booking_time")
+            call.booking_date = _parse_booking_date(operator_results.get("booking_date"))
 
             # Voicemail calls are missed from the partner's perspective
             if call.classification == "VOICEMAIL":
@@ -209,7 +220,7 @@ def callrail_callback():
         # Transcript already available — classify immediately
         try:
             biz_name = tracking_line.label or tracking_line.partner_name
-            results = classify_transcript(transcription, business_name=biz_name)
+            results = classify_transcript(transcription, business_name=biz_name, call_date=call_date)
             call.full_transcript = transcription
             call.classification = results.get("classification")
             call.confidence = results.get("confidence")
@@ -219,6 +230,7 @@ def callrail_callback():
             call.customer_name = results.get("customer_name")
             call.customer_address = results.get("customer_address")
             call.booking_time = results.get("booking_time")
+            call.booking_date = _parse_booking_date(results.get("booking_date"))
             call.analysed_at = datetime.now(timezone.utc)
             call.status = "completed"
 
