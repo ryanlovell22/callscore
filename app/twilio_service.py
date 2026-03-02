@@ -155,14 +155,22 @@ def fetch_calls(account_sid, auth_token, status_list, date_after=None):
 
 
 def create_ci_service(account_sid, auth_token, webhook_url=None):
-    """Create a Conversational Intelligence service.
+    """Create or reuse a Conversational Intelligence service.
 
     Returns:
         service_sid (str)
     """
-    url = f"{TWILIO_CI_BASE}/Services"
     auth = get_auth(account_sid, auth_token)
 
+    # Check for existing service first
+    list_resp = requests.get(f"{TWILIO_CI_BASE}/Services", auth=auth, timeout=30)
+    if list_resp.status_code == 200:
+        for svc in list_resp.json().get("services", []):
+            if svc.get("unique_name") == "callverdict":
+                logger.info("Reusing existing CI service %s", svc["sid"])
+                return svc["sid"]
+
+    # No existing service — create one
     data = {
         "UniqueName": "callverdict",
         "FriendlyName": "CallVerdict Job Classifier",
@@ -173,7 +181,7 @@ def create_ci_service(account_sid, auth_token, webhook_url=None):
         data["WebhookUrl"] = webhook_url
         data["WebhookHttpMethod"] = "POST"
 
-    resp = requests.post(url, auth=auth, data=data, timeout=30)
+    resp = requests.post(f"{TWILIO_CI_BASE}/Services", auth=auth, data=data, timeout=30)
     resp.raise_for_status()
     return resp.json()["sid"]
 
