@@ -61,7 +61,7 @@
         <!-- A/B Test: Re-analyse with OpenAI -->
         <h5>Compare AI Pipelines</h5>
         <form method="post" action="{{ url_for('dashboard.compare_openai', call_id=call.id) }}">
-            <button type="submit" id="compare-btn" onclick="this.setAttribute('aria-busy','true');this.disabled=true;this.textContent='Processing (15-30s)...';">
+            <button type="submit" id="compare-btn" onclick="var b=this;setTimeout(function(){b.setAttribute('aria-busy','true');b.textContent='Processing (15-30s)...';},10);">
                 Re-analyse with OpenAI
             </button>
         </form>
