@@ -170,7 +170,7 @@ def transcribe_recording(recording_url, auth=None):
             os.unlink(tmp_path)
 
 
-def classify_transcript(transcript_text, business_name=None, call_date=None, tradie_name=None):
+def classify_transcript(transcript_text, business_name=None, call_date=None, tradie_name=None, model="gpt-4o-mini"):
     """Classify a call transcript using GPT-4o-mini.
 
     Args:
@@ -208,7 +208,7 @@ def classify_transcript(transcript_text, business_name=None, call_date=None, tra
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=model,
             messages=[
                 {
                     "role": "system",

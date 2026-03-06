@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Compare AI Pipelines — CallVerdict{% endblock %}
+{% block title %}Compare Models — CallVerdict{% endblock %}
 
 {% block content %}
-<h2>AI Pipeline Comparison</h2>
+<h2>Model Comparison</h2>
 
 <a href="{{ url_for('dashboard.call_detail', call_id=call.id) }}">&larr; Back to call detail</a>
 
@@ -11,20 +11,18 @@
     {% if call.tracking_line %}| <strong>Line:</strong> {{ call.tracking_line.label }}{% endif %}
 </p>
 
-<!-- Match/Mismatch indicator -->
 <p style="margin-bottom: 1.5rem;">
     <strong>Classification Result:</strong>
     {% if match %}
-        <mark style="background: var(--ins-color, #d4edda); color: #155724; padding: 0.2rem 0.6rem; border-radius: 4px;">MATCH</mark>
+        <mark style="background: rgba(40, 167, 69, 0.2); color: #51cf66; padding: 0.2rem 0.6rem; border-radius: 4px;">MATCH</mark>
     {% else %}
-        <mark style="background: var(--del-color, #f8d7da); color: #721c24; padding: 0.2rem 0.6rem; border-radius: 4px;">MISMATCH</mark>
+        <mark style="background: rgba(220, 53, 69, 0.2); color: #ff6b6b; padding: 0.2rem 0.6rem; border-radius: 4px;">MISMATCH</mark>
     {% endif %}
 </p>
 
 <div class="grid">
-    <!-- Twilio CI Results -->
     <article>
-        <h4>Twilio CI <small style="color: var(--muted-color);">($0.08/call)</small></h4>
+        <h4>GPT-4o-mini <small style="color: var(--pico-muted-color);">(current)</small></h4>
         <table>
             <tr>
                 <td><strong>Classification</strong></td>
@@ -34,7 +32,7 @@
                     {% elif call.classification == 'NOT_BOOKED' %}
                         <mark class="badge-not-booked">Not Booked</mark>
                     {% elif call.classification == 'VOICEMAIL' %}
-                        Voicemail
+                        <mark class="badge-voicemail">Voicemail</mark>
                     {% else %}
                         {{ call.classification or '—' }}
                     {% endif %}
@@ -44,17 +42,14 @@
             <tr><td><strong>Confidence</strong></td><td>{{ "%.0f"|format(call.confidence * 100) }}%</td></tr>
             {% endif %}
             <tr><td><strong>Summary</strong></td><td>{{ call.summary or '—' }}</td></tr>
-            <tr><td><strong>Service Type</strong></td><td>{{ call.service_type or '—' }}</td></tr>
-            <tr><td><strong>Urgent</strong></td><td>{{ 'Yes' if call.urgent else 'No' }}</td></tr>
             <tr><td><strong>Customer Name</strong></td><td>{{ call.customer_name or '—' }}</td></tr>
             <tr><td><strong>Booking Time</strong></td><td>{{ call.booking_time or '—' }}</td></tr>
             <tr><td><strong>Address</strong></td><td>{{ call.customer_address or '—' }}</td></tr>
         </table>
     </article>
 
-    <!-- OpenAI Results -->
     <article>
-        <h4>OpenAI <small style="color: var(--muted-color);">(~$0.03-0.04/call)</small></h4>
+        <h4>GPT-4o <small style="color: var(--pico-muted-color);">(comparison)</small></h4>
         <table>
             <tr>
                 <td><strong>Classification</strong></td>
@@ -64,7 +59,7 @@
                     {% elif openai_result.classification == 'NOT_BOOKED' %}
                         <mark class="badge-not-booked">Not Booked</mark>
                     {% elif openai_result.classification == 'VOICEMAIL' %}
-                        Voicemail
+                        <mark class="badge-voicemail">Voicemail</mark>
                     {% else %}
                         {{ openai_result.classification or '—' }}
                     {% endif %}
@@ -74,25 +69,10 @@
             <tr><td><strong>Confidence</strong></td><td>{{ "%.0f"|format(openai_result.confidence * 100) }}%</td></tr>
             {% endif %}
             <tr><td><strong>Summary</strong></td><td>{{ openai_result.summary or '—' }}</td></tr>
-            <tr><td><strong>Service Type</strong></td><td>{{ openai_result.service_type or '—' }}</td></tr>
-            <tr><td><strong>Urgent</strong></td><td>{{ 'Yes' if openai_result.urgent else 'No' }}</td></tr>
             <tr><td><strong>Customer Name</strong></td><td>{{ openai_result.customer_name or '—' }}</td></tr>
             <tr><td><strong>Booking Time</strong></td><td>{{ openai_result.booking_time or '—' }}</td></tr>
             <tr><td><strong>Address</strong></td><td>{{ openai_result.customer_address or '—' }}</td></tr>
         </table>
-    </article>
-</div>
-
-<!-- Transcript comparison -->
-<h3>Transcript Comparison</h3>
-<div class="grid">
-    <article>
-        <h4>Twilio CI Transcript</h4>
-        <pre style="white-space: pre-wrap; font-size: 0.85rem; max-height: 400px; overflow-y: auto;">{{ call.full_transcript or 'No transcript available' }}</pre>
-    </article>
-    <article>
-        <h4>OpenAI Whisper Transcript</h4>
-        <pre style="white-space: pre-wrap; font-size: 0.85rem; max-height: 400px; overflow-y: auto;">{{ openai_transcript or 'No transcript available' }}</pre>
     </article>
 </div>
 {% endblock %}

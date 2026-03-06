@@ -57,15 +57,15 @@
         </table>
         {% endif %}
 
-        {% if current_user.user_type == 'account' and call.source == 'twilio' and call.recording_url %}
-        <!-- A/B Test: Re-analyse with OpenAI -->
-        <h5>Compare AI Pipelines</h5>
+        {% if current_user.is_admin and call.full_transcript %}
+        <!-- Admin: Compare current model vs GPT-4o -->
+        <h5>Compare Models</h5>
         <form method="post" action="{{ url_for('dashboard.compare_openai', call_id=call.id) }}">
-            <button type="submit" id="compare-btn" onclick="var b=this;setTimeout(function(){b.setAttribute('aria-busy','true');b.textContent='Processing (15-30s)...';},10);">
-                Re-analyse with OpenAI
+            <button type="submit" id="compare-btn" onclick="var b=this;setTimeout(function(){b.setAttribute('aria-busy','true');b.textContent='Processing...';},10);">
+                Re-analyse with GPT-4o
             </button>
         </form>
-        <small style="color: var(--muted-color);">Costs ~$0.03-0.04. Results are not saved.</small>
+        <small style="color: var(--pico-muted-color);">Compares current GPT-4o-mini result against GPT-4o. Results are not saved.</small>
         {% endif %}
 
         {% if current_user.user_type == 'account' %}
