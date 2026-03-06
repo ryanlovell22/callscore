@@ -12,7 +12,7 @@
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Email</th>
+                <th>Cost/Lead</th>
                 <th>Assigned Lines</th>
                 <th>Created</th>
                 <th>Proof Links</th>
@@ -23,11 +23,12 @@
             {% for partner in partners %}
             <tr>
                 <td>{{ partner.name }}</td>
-                <td>{{ partner.email }}</td>
+                <td>${{ "%.2f"|format(partner.cost_per_lead) if partner.cost_per_lead else '0.00' }}</td>
                 <td>{{ partner.tracking_lines | length }}</td>
                 <td>{{ partner.created_at.strftime('%d %b %Y') if partner.created_at else '—' }}</td>
                 <td><a href="{{ url_for('dashboard.shared_links') }}">Manage</a></td>
                 <td>
+                    <a href="{{ url_for('partners.edit', partner_id=partner.id) }}">Edit</a>
                     <form method="post" action="{{ url_for('partners.delete', partner_id=partner.id) }}" style="display:inline;">
                         <button type="submit" class="outline secondary" onclick="return confirm('Delete this partner? Their tracking lines will be unassigned.')">Delete</button>
                     </form>

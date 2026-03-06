@@ -84,9 +84,10 @@ def index():
     answered = booked + not_booked
     rate = round(booked / answered * 100, 1) if answered > 0 else 0
 
-    # Lead value via DB aggregate
+    # Lead value via DB aggregate (uses partner's cost_per_lead)
     total_value = db.session.query(
-        func.coalesce(func.sum(TrackingLine.cost_per_lead), 0)
+        func.coalesce(func.sum(Partner.cost_per_lead), 0)
+    ).join(TrackingLine, TrackingLine.partner_id == Partner.id
     ).join(Call, Call.tracking_line_id == TrackingLine.id).filter(
         Call.id.in_(query.filter(Call.classification == "JOB_BOOKED").with_entities(Call.id))
     ).scalar()
@@ -129,6 +130,7 @@ def index():
 
     # Getting-started checklist (shown until ALL 3 steps are complete)
     setup_done = None
+    setup_just_completed = False
     if current_user.user_type == "account":
         calls_connected = bool(
             current_user.twilio_service_sid
@@ -142,6 +144,8 @@ def index():
                 "has_partners": has_partners,
                 "has_lines": has_lines,
             }
+        elif Call.query.filter_by(account_id=current_user.id).count() == 0:
+            setup_just_completed = True
 
     return render_template(
         "dashboard/index.html",
@@ -161,6 +165,7 @@ def index():
         },
         filters=filters,
         setup_done=setup_done,
+        setup_just_completed=setup_just_completed,
         active_page="dashboard",
     )
 
@@ -425,17 +430,22 @@ def shared_links():
         account_id=current_user.id
     ).order_by(SharedDashboard.created_at.desc()).all()
 
+    partners = Partner.query.filter_by(account_id=current_user.id).all()
     lines = TrackingLine.query.filter_by(
         account_id=current_user.id, active=True
     ).all()
-    from ..models import Partner
-    partners = Partner.query.filter_by(account_id=current_user.id).all()
+
+    # Group lines by partner for the checkbox fieldsets
+    lines_by_partner = {}
+    for line in lines:
+        if line.partner_id:
+            lines_by_partner.setdefault(line.partner_id, []).append(line)
 
     return render_template(
         "dashboard/shared_links.html",
         dashboards=dashboards,
-        lines=lines,
         partners=partners,
+        lines_by_partner=lines_by_partner,
         active_page="shared_links",
     )
 
@@ -450,21 +460,45 @@ def create_shared_link():
     from werkzeug.security import generate_password_hash
     from ..models import SharedDashboard
 
-    partner_id = request.form.get("partner_id", type=int) or None
-    line_id = request.form.get("line_id", type=int) or None
+    partner_id = request.form.get("partner_id", type=int)
+    if not partner_id:
+        flash("Please select a partner.", "error")
+        return redirect(url_for("dashboard.shared_links"))
+
+    # Validate partner belongs to this account
+    partner = Partner.query.filter_by(id=partner_id, account_id=current_user.id).first()
+    if not partner:
+        flash("Invalid partner.", "error")
+        return redirect(url_for("dashboard.shared_links"))
+
     password = request.form.get("password", "").strip()
     show_recordings = "show_recordings" in request.form
     show_transcripts = "show_transcripts" in request.form
 
+    # Get selected line IDs and validate they belong to this account + partner
+    line_ids = request.form.getlist("line_ids", type=int)
+    valid_lines = TrackingLine.query.filter(
+        TrackingLine.id.in_(line_ids),
+        TrackingLine.account_id == current_user.id,
+        TrackingLine.partner_id == partner_id,
+        TrackingLine.active == True,
+    ).all() if line_ids else []
+
+    # If no lines selected, default to all active partner lines
+    if not valid_lines:
+        valid_lines = TrackingLine.query.filter_by(
+            account_id=current_user.id, partner_id=partner_id, active=True
+        ).all()
+
     dashboard = SharedDashboard(
         account_id=current_user.id,
         partner_id=partner_id,
-        tracking_line_id=line_id,
         share_token=secrets.token_urlsafe(32),
         password_hash=generate_password_hash(password) if password else None,
         show_recordings=show_recordings,
         show_transcripts=show_transcripts,
     )
+    dashboard.tracking_lines = valid_lines
     db.session.add(dashboard)
     db.session.commit()
 

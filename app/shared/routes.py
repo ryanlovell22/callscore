@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from flask import render_template, request, redirect, url_for, session, abort
 from werkzeug.security import check_password_hash
 
-from ..models import db, Call, SharedDashboard, TrackingLine
+from ..models import db, Call, SharedDashboard
 from . import bp
 
 logger = logging.getLogger(__name__)
@@ -23,23 +23,13 @@ def public_dashboard(share_token):
         if not session.get(session_key):
             return render_template("shared/password.html", share_token=share_token)
 
-    # Build call query based on dashboard scope
+    # Build call query scoped to the shared link's tracking lines
     query = Call.query.filter_by(account_id=dashboard.account_id)
-
-    if dashboard.tracking_line_id:
-        query = query.filter_by(tracking_line_id=dashboard.tracking_line_id)
-    elif dashboard.partner_id:
-        # Get all lines assigned to this partner
-        partner_lines = TrackingLine.query.filter_by(
-            account_id=dashboard.account_id,
-            partner_id=dashboard.partner_id,
-            active=True,
-        ).all()
-        line_ids = [l.id for l in partner_lines]
-        if line_ids:
-            query = query.filter(Call.tracking_line_id.in_(line_ids))
-        else:
-            query = query.filter(False)  # No lines, no calls
+    line_ids = [l.id for l in dashboard.tracking_lines]
+    if line_ids:
+        query = query.filter(Call.tracking_line_id.in_(line_ids))
+    else:
+        query = query.filter(False)
 
     # Date filters
     date_from = request.args.get("date_from")
@@ -118,17 +108,9 @@ def public_call_detail(share_token, call_id):
     ).first_or_404()
 
     # Verify call belongs to dashboard scope
-    if dashboard.tracking_line_id and call.tracking_line_id != dashboard.tracking_line_id:
+    shared_line_ids = [l.id for l in dashboard.tracking_lines]
+    if call.tracking_line_id not in shared_line_ids:
         abort(404)
-    if dashboard.partner_id:
-        partner_line_ids = [
-            l.id for l in TrackingLine.query.filter_by(
-                account_id=dashboard.account_id,
-                partner_id=dashboard.partner_id,
-            ).all()
-        ]
-        if call.tracking_line_id not in partner_line_ids:
-            abort(404)
 
     return render_template(
         "shared/call_detail.html",

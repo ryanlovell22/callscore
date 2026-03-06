@@ -399,6 +399,168 @@ def retry_failed_submissions(account):
     return retried
 
 
+def run_callrail_backfill(account, days=7):
+    """Backfill historical calls from CallRail.
+
+    Mirrors the webhook handler logic but iterates over historical calls
+    fetched from the CallRail API.
+    """
+    from .callrail_service import fetch_callrail_calls
+
+    if not account.callrail_api_key_encrypted or not account.callrail_account_id:
+        logger.info("Account %s: No CallRail credentials, skipping backfill", account.id)
+        return 0
+
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    logger.info(
+        "Account %s: CallRail backfill, looking back %d days (since %s)",
+        account.id, days, since.isoformat(),
+    )
+
+    try:
+        calls = fetch_callrail_calls(
+            account.callrail_api_key_encrypted,
+            account.callrail_account_id,
+            date_after=since,
+        )
+    except Exception:
+        logger.exception("Account %s: Failed to fetch CallRail calls", account.id)
+        return 0
+
+    new_count = 0
+    for cr_call in calls:
+        call_id = cr_call.get("id")
+        if not call_id:
+            continue
+
+        # Dedup by callrail_call_id
+        existing = Call.query.filter_by(
+            account_id=account.id, callrail_call_id=str(call_id)
+        ).first()
+        if existing:
+            continue
+
+        duration = int(cr_call.get("duration") or 0)
+        if duration < MIN_RECORDING_SECONDS:
+            continue
+
+        customer_phone = cr_call.get("customer_phone_number", "")
+        tracking_phone = cr_call.get("tracking_phone_number", "")
+        recording_url = cr_call.get("recording")
+        transcription = cr_call.get("transcription")
+        answered = cr_call.get("answered", False)
+        start_time = cr_call.get("start_time")
+
+        # Match tracking line by CallRail tracking number
+        tracking_line = TrackingLine.query.filter_by(
+            account_id=account.id,
+            callrail_tracking_number=tracking_phone,
+            active=True,
+        ).first()
+        if not tracking_line:
+            continue
+
+        # Parse call date
+        call_date = None
+        if start_time:
+            try:
+                call_date = datetime.fromisoformat(start_time)
+            except (ValueError, TypeError):
+                call_date = datetime.now(timezone.utc)
+
+        # Missed / unanswered calls
+        if not answered or not recording_url:
+            call = Call(
+                account_id=account.id,
+                tracking_line_id=tracking_line.id,
+                callrail_call_id=str(call_id),
+                caller_number=customer_phone,
+                call_duration=duration,
+                call_date=call_date,
+                recording_url=recording_url,
+                source="callrail",
+                call_outcome="missed",
+                status="completed",
+            )
+            db.session.add(call)
+            new_count += 1
+            continue
+
+        # Check usage limit
+        at_limit = account.at_usage_limit
+        if at_limit:
+            call = Call(
+                account_id=account.id,
+                tracking_line_id=tracking_line.id,
+                callrail_call_id=str(call_id),
+                caller_number=customer_phone,
+                call_duration=duration,
+                call_date=call_date,
+                recording_url=recording_url,
+                source="callrail",
+                call_outcome="answered",
+                status="limit_reached",
+            )
+            db.session.add(call)
+            new_count += 1
+            continue
+
+        # Answered call with recording
+        call = Call(
+            account_id=account.id,
+            tracking_line_id=tracking_line.id,
+            callrail_call_id=str(call_id),
+            caller_number=customer_phone,
+            call_duration=duration,
+            call_date=call_date,
+            recording_url=recording_url,
+            source="callrail",
+            call_outcome="answered",
+            status="processing",
+        )
+        db.session.add(call)
+        db.session.flush()
+
+        if transcription:
+            # Transcript available — classify immediately
+            try:
+                biz_name = tracking_line.label or tracking_line.partner_name
+                results = classify_transcript(
+                    transcription, business_name=biz_name, call_date=call_date
+                )
+                call.full_transcript = transcription
+                call.classification = results.get("classification")
+                call.confidence = results.get("confidence")
+                call.summary = results.get("summary")
+                call.service_type = results.get("service_type")
+                call.urgent = results.get("urgent", False)
+                call.customer_name = results.get("customer_name")
+                call.customer_address = results.get("customer_address")
+                call.booking_time = results.get("booking_time")
+                call.booking_date = _parse_booking_date(results.get("booking_date"))
+                call.analysed_at = datetime.now(timezone.utc)
+                call.status = "completed"
+
+                if call.classification == "VOICEMAIL":
+                    call.call_outcome = "voicemail"
+            except Exception as e:
+                logger.exception(
+                    "Failed to classify CallRail call %s: %s", call_id, e
+                )
+                call.status = "failed"
+        # else: no transcript, status stays "processing" for cron to pick up
+
+        _increment_usage(account)
+        new_count += 1
+
+    db.session.commit()
+    logger.info(
+        "Account %s: CallRail backfill complete — %d calls imported",
+        account.id, new_count,
+    )
+    return new_count
+
+
 def run_full_sync(account, days=7):
     """Run all poll functions for an account with the given lookback period.
 

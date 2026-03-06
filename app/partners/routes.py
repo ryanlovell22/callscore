@@ -33,21 +33,16 @@ def index():
 def add():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
-        email = request.form.get("email", "").strip().lower()
+        cost_per_lead = request.form.get("cost_per_lead", 0) or 0
 
-        if not name or not email:
-            flash("Name and email are required.", "error")
-            return render_template("partners/form.html", active_page="partners")
-
-        # Check for duplicate email
-        if Partner.query.filter_by(email=email).first():
-            flash("That email is already in use.", "error")
-            return render_template("partners/form.html", active_page="partners")
+        if not name:
+            flash("Name is required.", "error")
+            return render_template("partners/form.html", partner=None, active_page="partners")
 
         partner = Partner(
             account_id=current_user.id,
             name=name,
-            email=email,
+            cost_per_lead=cost_per_lead,
         )
         db.session.add(partner)
         db.session.commit()
@@ -55,7 +50,33 @@ def add():
         flash(f"Partner '{name}' created.", "success")
         return redirect(url_for("partners.index"))
 
-    return render_template("partners/form.html", active_page="partners")
+    return render_template("partners/form.html", partner=None, active_page="partners")
+
+
+@bp.route("/<int:partner_id>/edit", methods=["GET", "POST"])
+@login_required
+@account_required
+def edit(partner_id):
+    partner = Partner.query.filter_by(
+        id=partner_id, account_id=current_user.id
+    ).first_or_404()
+
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        cost_per_lead = request.form.get("cost_per_lead", 0) or 0
+
+        if not name:
+            flash("Name is required.", "error")
+            return render_template("partners/form.html", partner=partner, active_page="partners")
+
+        partner.name = name
+        partner.cost_per_lead = cost_per_lead
+        db.session.commit()
+
+        flash(f"Partner '{name}' updated.", "success")
+        return redirect(url_for("partners.index"))
+
+    return render_template("partners/form.html", partner=partner, active_page="partners")
 
 
 @bp.route("/<int:partner_id>/delete", methods=["POST"])

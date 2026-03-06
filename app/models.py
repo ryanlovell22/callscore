@@ -70,8 +70,9 @@ class Partner(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"), nullable=False)
     name = db.Column(db.String(255), nullable=False)
-    email = db.Column(db.String(255), unique=True, nullable=False)
+    email = db.Column(db.String(255), nullable=True)
     password_hash = db.Column(db.String(255), nullable=True)
+    cost_per_lead = db.Column(db.Numeric(10, 2), default=0)
     created_at = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc)
     )
@@ -167,13 +168,29 @@ class Invoice(db.Model):
     )
 
 
+shared_dashboard_lines = db.Table(
+    "shared_dashboard_lines",
+    db.Column(
+        "shared_dashboard_id",
+        db.Integer,
+        db.ForeignKey("shared_dashboards.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    db.Column(
+        "tracking_line_id",
+        db.Integer,
+        db.ForeignKey("tracking_lines.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
+
+
 class SharedDashboard(db.Model):
     __tablename__ = "shared_dashboards"
 
     id = db.Column(db.Integer, primary_key=True)
     account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"), nullable=False)
-    tracking_line_id = db.Column(db.Integer, db.ForeignKey("tracking_lines.id"), nullable=True)
-    partner_id = db.Column(db.Integer, db.ForeignKey("partners.id"), nullable=True)
+    partner_id = db.Column(db.Integer, db.ForeignKey("partners.id"), nullable=False)
     share_token = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(255))
     active = db.Column(db.Boolean, default=True)
@@ -184,5 +201,7 @@ class SharedDashboard(db.Model):
     )
 
     account = db.relationship("Account", backref="shared_dashboards")
-    tracking_line = db.relationship("TrackingLine")
     partner = db.relationship("Partner")
+    tracking_lines = db.relationship(
+        "TrackingLine", secondary=shared_dashboard_lines, lazy="select"
+    )

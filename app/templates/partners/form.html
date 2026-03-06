@@ -1,18 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Add Partner — CallVerdict{% endblock %}
+{% block title %}{{ 'Edit' if partner else 'Add' }} Partner — CallVerdict{% endblock %}
 
 {% block content %}
-<h2>Add Partner</h2>
+<h2>{{ 'Edit' if partner else 'Add' }} Partner</h2>
 
 <article style="max-width: 600px;">
     <form method="post">
         <label for="name">Name</label>
-        <input type="text" id="name" name="name" placeholder="e.g. Dan Smith" required autocomplete="off">
+        <input type="text" id="name" name="name" value="{{ partner.name if partner else '' }}" placeholder="e.g. John's Locksmith" required autocomplete="off">
 
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" placeholder="dan@example.com" required autocomplete="off">
+        <label for="cost_per_lead">Cost per Lead ($)</label>
+        <input type="number" id="cost_per_lead" name="cost_per_lead" step="0.01" min="0"
+               value="{{ partner.cost_per_lead if partner and partner.cost_per_lead else '50.00' }}">
 
-        <button type="submit">Create Partner</button>
+        <button type="submit">{{ 'Save' if partner else 'Create Partner' }}</button>
         <a href="{{ url_for('partners.index') }}" role="button" class="outline">Cancel</a>
     </form>
 </article>

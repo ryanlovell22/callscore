@@ -49,6 +49,7 @@ def _get_available_numbers(account, exclude_line_id=None):
                 available.append({
                     "number": num["phone_number"],
                     "label": f"{num['phone_number']} — {num['friendly_name']} (Twilio)",
+                    "friendly_name": num["friendly_name"],
                     "source": "twilio",
                 })
         except Exception:
@@ -68,6 +69,7 @@ def _get_available_numbers(account, exclude_line_id=None):
                 available.append({
                     "number": t["tracking_phone_number"],
                     "label": f"{t['tracking_phone_number']} — {t['name'] or 'Unnamed'} (CallRail)",
+                    "friendly_name": t["name"] or "Unnamed",
                     "source": "callrail",
                     "callrail_tracker_id": str(t["id"]),
                     "callrail_tracking_number": t["tracking_phone_number"],
@@ -130,9 +132,6 @@ def add():
             callrail_tracker_id=callrail_tracker_id,
             callrail_tracking_number=callrail_tracking_number,
             label=request.form.get("label", "").strip(),
-            partner_name=request.form.get("partner_name", "").strip(),
-            partner_phone=request.form.get("partner_phone", "").strip(),
-            cost_per_lead=request.form.get("cost_per_lead", 0) or 0,
         )
         db.session.add(line)
         db.session.commit()
@@ -169,9 +168,6 @@ def edit(line_id):
         line.callrail_tracker_id = request.form.get("callrail_tracker_id", "").strip() or None
         line.callrail_tracking_number = request.form.get("callrail_tracking_number", "").strip() or None
         line.label = request.form.get("label", "").strip()
-        line.partner_name = request.form.get("partner_name", "").strip()
-        line.partner_phone = request.form.get("partner_phone", "").strip()
-        line.cost_per_lead = request.form.get("cost_per_lead", 0) or 0
         line.partner_id = request.form.get("partner_id", type=int) or None
         line.active = "active" in request.form
         db.session.commit()

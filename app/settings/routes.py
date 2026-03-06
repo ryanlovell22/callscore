@@ -43,6 +43,22 @@ def _spawn_backfill(account_id, days=7):
     thread.start()
 
 
+def _spawn_callrail_backfill(account_id, days=7):
+    """Run a CallRail backfill in a background thread."""
+    from ..models import Account
+    app = current_app._get_current_object()
+
+    def _run():
+        with app.app_context():
+            account = db.session.get(Account, account_id)
+            if account:
+                from ..poll_service import run_callrail_backfill
+                run_callrail_backfill(account, days=days)
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+
+
 @bp.route("/", methods=["GET", "POST"])
 @login_required
 @account_required
@@ -88,14 +104,11 @@ def index():
                 create_ci_operator(sid, token, service_sid)
                 db.session.commit()
 
-                # Auto-backfill last 24 hours of calls in background
-                _spawn_backfill(account.id, days=1)
-
                 flash(
-                    "Twilio connected and call analysis enabled. "
-                    "Syncing your last 24 hours of calls in the background.",
+                    "Twilio connected and call analysis enabled.",
                     "success",
                 )
+                return redirect(url_for("settings.backsync", source="twilio"))
             except Exception:
                 account.twilio_service_sid = None
                 db.session.commit()
@@ -199,12 +212,17 @@ def save_callrail():
         flash("No CallRail accounts found for this API key.", "error")
         return redirect(url_for("settings.index"))
 
+    # Track if this is first connect (before saving the account ID)
+    was_first_connect = not account.callrail_account_id
+
     # If single account, save automatically; if multiple, use the first one
     account.callrail_api_key_encrypted = api_key
     account.callrail_account_id = str(accounts[0]["id"])
     db.session.commit()
 
     flash(f"CallRail connected — Account: {accounts[0]['name']}", "success")
+    if was_first_connect:
+        return redirect(url_for("settings.backsync", source="callrail"))
     return redirect(url_for("settings.index"))
 
 
@@ -249,3 +267,61 @@ def sync_calls():
         "success",
     )
     return redirect(url_for("settings.index"))
+
+
+@bp.route("/backsync", methods=["GET"])
+@login_required
+@account_required
+def backsync():
+    """Show the back-sync onboarding page after first connect."""
+    account = current_user
+    source = request.args.get("source", "")
+
+    # Guard: redirect if source not connected
+    if source == "twilio" and not account.twilio_service_sid:
+        flash("Please connect Twilio first.", "error")
+        return redirect(url_for("settings.index"))
+    elif source == "callrail" and not account.callrail_account_id:
+        flash("Please connect CallRail first.", "error")
+        return redirect(url_for("settings.index"))
+    elif source not in ("twilio", "callrail"):
+        return redirect(url_for("settings.index"))
+
+    source_name = "Twilio" if source == "twilio" else "CallRail"
+
+    return render_template(
+        "settings/backsync.html",
+        source=source,
+        source_name=source_name,
+        plan_name=account.stripe_plan or "free",
+        calls_used=account.plan_calls_used or 0,
+        calls_limit=account.plan_calls_limit or 10,
+        is_admin=account.is_admin,
+        active_page="settings",
+    )
+
+
+@bp.route("/backsync", methods=["POST"])
+@login_required
+@account_required
+def backsync_submit():
+    """Trigger a back-sync from the onboarding page."""
+    account = current_user
+    source = request.form.get("source", "")
+    days = request.form.get("days", 1, type=int)
+    days = min(max(days, 1), 30)  # Clamp between 1 and 30
+
+    if source == "twilio" and account.twilio_service_sid:
+        _spawn_backfill(account.id, days=days)
+    elif source == "callrail" and account.callrail_account_id:
+        _spawn_callrail_backfill(account.id, days=days)
+    else:
+        flash("Source not connected.", "error")
+        return redirect(url_for("settings.index"))
+
+    flash(
+        f"Importing your last {days} day{'s' if days != 1 else ''} of calls. "
+        "They'll appear on your dashboard shortly.",
+        "success",
+    )
+    return redirect(url_for("dashboard.index"))

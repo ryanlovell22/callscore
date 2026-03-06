@@ -38,22 +38,34 @@
             {% if setup_done.has_partners %}&#10003;{% else %}&#9744;{% endif %}
             <strong>2. Add your partners</strong>
             {% if not setup_done.has_partners %}
-            &rarr; <a href="{{ url_for('partners.index') }}">Add your contractors</a>
+            &rarr; <a href="{{ url_for('partners.index') }}">Add the businesses you send leads to</a>
             {% else %}
             &mdash; Done!
             {% endif %}
         </li>
         <li style="margin-bottom: 1rem; {% if setup_done.has_lines %}opacity: 0.6; text-decoration: line-through;{% endif %}">
             {% if setup_done.has_lines %}&#10003;{% else %}&#9744;{% endif %}
-            <strong>3. Add tracking lines</strong>
+            <strong>3. Assign your lines</strong>
             {% if not setup_done.has_lines %}
-            &rarr; <a href="{{ url_for('lines.index') }}">Tell us which phone numbers to monitor</a>
+            &rarr; <a href="{{ url_for('lines.index') }}">Tell us which lines to monitor for each partner</a>
             {% else %}
             &mdash; Done!
             {% endif %}
         </li>
     </ol>
     <p style="color: var(--pico-muted-color);">Then calls will appear here automatically.</p>
+</article>
+{% endif %}
+
+{% if setup_just_completed %}
+<article style="max-width: 600px;">
+    <h3>You're all set!</h3>
+    <p>Your account is fully configured. Here's what happens next:</p>
+    <ul>
+        <li>Calls are checked every 5 minutes</li>
+        <li>Each call is transcribed and classified automatically</li>
+    </ul>
+    <p>Make a test call to one of your tracking numbers, or <a href="{{ url_for('settings.index') }}">upload a recording</a> to try it now.</p>
 </article>
 {% endif %}
 
@@ -199,8 +211,10 @@
 </nav>
 {% endif %}
 {% else %}
+    {% if not setup_just_completed %}
     <article>
         <p>No calls found for this period.</p>
     </article>
+    {% endif %}
 {% endif %}
 {% endblock %}

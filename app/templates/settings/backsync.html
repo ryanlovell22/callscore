@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Import Calls — CallVerdict{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px;">
+
+    <!-- Connection banner -->
+    <div class="connection-success">
+        <p class="connection-success-title">{{ source_name }} Connected!</p>
+        <p>Your account is linked and ready to go.</p>
+    </div>
+
+    <!-- Plan usage box -->
+    <article>
+        <h4>Your Plan: {{ plan_name | capitalize }}</h4>
+        {% if is_admin %}
+        <p><strong>Unlimited</strong> (admin account)</p>
+        {% else %}
+        <p>{{ calls_used }} of {{ calls_limit }} calls used this period</p>
+        <progress value="{{ calls_used }}" max="{{ calls_limit }}"></progress>
+        <p><small>Each call with a recording counts toward your limit. Missed calls are free.</small></p>
+        {% if plan_name == 'free' %}
+        <p><small style="color: var(--pico-muted-color);">On the Free plan, longer lookback periods may hit your limit quickly.</small></p>
+        {% endif %}
+        {% endif %}
+    </article>
+
+    <!-- Period selection -->
+    <article>
+        <form method="post">
+            <input type="hidden" name="source" value="{{ source }}">
+            <fieldset>
+                <legend><strong>How far back should we look?</strong></legend>
+                <p style="color: var(--pico-muted-color); margin-top: 0;">We'll import calls from your {{ source_name }} account and score any that have recordings.</p>
+                <label><input type="radio" name="days" value="1" checked> Last 24 hours</label>
+                <label><input type="radio" name="days" value="7"> Last 7 days</label>
+                <label><input type="radio" name="days" value="14"> Last 14 days</label>
+                <label><input type="radio" name="days" value="30"> Last 30 days</label>
+            </fieldset>
+            <div style="display: flex; gap: 1rem; align-items: center; margin-top: 1rem;">
+                <button type="submit">Import Calls</button>
+                <a href="{{ url_for('dashboard.index') }}" role="button" class="outline">Skip for now</a>
+            </div>
+        </form>
+    </article>
+
+</div>
+{% endblock %}
