@@ -57,7 +57,10 @@ def _process_uploads(file_tasks, account_id, app):
 
                 tracking_line = call.tracking_line
                 biz_name = (tracking_line.label or tracking_line.partner_name) if tracking_line else None
-                result = classify_transcript(transcript.text, business_name=biz_name, call_date=call.call_date)
+                tradie = None
+                if tracking_line:
+                    tradie = (tracking_line.partner.name if tracking_line.partner else None) or tracking_line.partner_name
+                result = classify_transcript(transcript.text, business_name=biz_name, call_date=call.call_date, tradie_name=tradie)
                 call.classification = result.get("classification")
                 call.confidence = result.get("confidence")
                 call.summary = result.get("summary")

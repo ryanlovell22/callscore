@@ -29,6 +29,19 @@ CLASSIFICATION_PROMPT = (
     "the business or tradie's name.\n"
     "- In summaries, refer to 'the customer' (caller) and 'the tradie' "
     "or 'the business' (answerer) clearly.\n\n"
+    "HOW TO IDENTIFY WHO IS WHO in the transcript:\n"
+    "- The transcript has no speaker labels, so you must infer from context.\n"
+    "- The person who ANSWERS the phone is the tradie. They typically speak "
+    "first with a greeting like 'Hello', '[Name] speaking', or the business "
+    "name. If the transcript starts with a name (e.g. 'Greg speaking', "
+    "'Dan here'), that person is the TRADIE.\n"
+    "- The CUSTOMER is the one who called in. They typically explain their "
+    "issue, ask about services, or request a repair.\n"
+    "- If both people give their name, the answerer's name is the tradie "
+    "and the caller's name is the customer.\n"
+    "- If the only name mentioned belongs to the person who answers "
+    "(the tradie), then customer_name should be null — do NOT use "
+    "the tradie's name as the customer_name.\n\n"
     "Classify the call as one of:\n\n"
     "JOB_BOOKED - The customer and business reached a clear mutual "
     "commitment to proceed. This includes ANY of the following:\n"
@@ -157,7 +170,7 @@ def transcribe_recording(recording_url, auth=None):
             os.unlink(tmp_path)
 
 
-def classify_transcript(transcript_text, business_name=None, call_date=None):
+def classify_transcript(transcript_text, business_name=None, call_date=None, tradie_name=None):
     """Classify a call transcript using GPT-4o-mini.
 
     Args:
@@ -184,6 +197,12 @@ def classify_transcript(transcript_text, business_name=None, call_date=None):
             f'The business answering these calls is "{business_name}". '
             "If you see this name in the transcript, that person is the "
             "TRADIE (the one answering), NOT the customer.\n\n"
+        )
+    if tradie_name:
+        user_content += (
+            f'The tradie/person answering the phone is "{tradie_name}". '
+            "This is NOT the customer. Do NOT use this name as the "
+            "customer_name.\n\n"
         )
     user_content += f"Here is the call transcript:\n\n{transcript_text}"
 

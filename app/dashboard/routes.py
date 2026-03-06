@@ -275,12 +275,15 @@ def compare_openai(call_id):
 
         # Classify with GPT-4o-mini
         business_name = None
-        if call.tracking_line and call.tracking_line.label:
+        tradie = None
+        if call.tracking_line:
             business_name = call.tracking_line.label
+            tradie = (call.tracking_line.partner.name if call.tracking_line.partner else None) or call.tracking_line.partner_name
         openai_result = classify_transcript(
             openai_transcript,
             business_name=business_name,
             call_date=call.call_date,
+            tradie_name=tradie,
         )
 
         match = (

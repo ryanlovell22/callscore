@@ -228,7 +228,8 @@ def callrail_callback():
         # Transcript already available — classify immediately
         try:
             biz_name = tracking_line.label or tracking_line.partner_name
-            results = classify_transcript(transcription, business_name=biz_name, call_date=call_date)
+            tradie = (tracking_line.partner.name if tracking_line.partner else None) or tracking_line.partner_name
+            results = classify_transcript(transcription, business_name=biz_name, call_date=call_date, tradie_name=tradie)
             call.full_transcript = transcription
             call.classification = results.get("classification")
             call.confidence = results.get("confidence")

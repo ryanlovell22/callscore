@@ -17,6 +17,15 @@ logger = logging.getLogger(__name__)
 MIN_RECORDING_SECONDS = 3
 
 
+def _get_tradie_name(tracking_line):
+    """Get the tradie/partner name for a tracking line, if available."""
+    if not tracking_line:
+        return None
+    if tracking_line.partner and tracking_line.partner.name:
+        return tracking_line.partner.name
+    return tracking_line.partner_name
+
+
 def _parse_booking_date(value):
     """Parse an ISO 8601 booking_date string into a datetime, or None."""
     if not value:
@@ -139,7 +148,8 @@ def poll_account(account, since):
                 call.full_transcript = transcript_text
 
                 biz_name = (tracking_line.label or tracking_line.partner_name) if tracking_line else None
-                result = classify_transcript(transcript_text, business_name=biz_name, call_date=call_date)
+                tradie = _get_tradie_name(tracking_line)
+                result = classify_transcript(transcript_text, business_name=biz_name, call_date=call_date, tradie_name=tradie)
 
                 call.classification = result.get("classification")
                 call.confidence = result.get("confidence")
@@ -366,7 +376,8 @@ def retry_failed_submissions(account):
 
             tracking_line = call.tracking_line
             biz_name = (tracking_line.label or tracking_line.partner_name) if tracking_line else None
-            result = classify_transcript(transcript_text, business_name=biz_name, call_date=call.call_date)
+            tradie = _get_tradie_name(tracking_line)
+            result = classify_transcript(transcript_text, business_name=biz_name, call_date=call.call_date, tradie_name=tradie)
 
             call.classification = result.get("classification")
             call.confidence = result.get("confidence")
@@ -525,8 +536,9 @@ def run_callrail_backfill(account, days=7):
             # Transcript available — classify immediately
             try:
                 biz_name = tracking_line.label or tracking_line.partner_name
+                tradie = _get_tradie_name(tracking_line)
                 results = classify_transcript(
-                    transcription, business_name=biz_name, call_date=call_date
+                    transcription, business_name=biz_name, call_date=call_date, tradie_name=tradie
                 )
                 call.full_transcript = transcription
                 call.classification = results.get("classification")
