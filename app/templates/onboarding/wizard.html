@@ -154,7 +154,7 @@
     <p style="color: var(--pico-muted-color);">Want to pull in recent calls from your connected account? This uses your plan allowance.</p>
 
     <article style="margin-bottom: 1.5rem;">
-        <p><strong>Plan:</strong> {{ account.stripe_plan or 'free' | capitalize }}</p>
+        <p><strong>Plan:</strong> {{ (account.stripe_plan or 'free') | capitalize }}</p>
         <p><strong>Calls remaining:</strong> {{ (account.plan_calls_limit or 10) - (account.plan_calls_used or 0) }} of {{ account.plan_calls_limit or 10 }}</p>
         <progress value="{{ account.plan_calls_used or 0 }}" max="{{ account.plan_calls_limit or 10 }}"></progress>
     </article>
