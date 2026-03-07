@@ -6,9 +6,9 @@ date: 2026-03-07
 author: CallOutcome Team
 ---
 
-Contractors live and die by their phone. Whether you are a plumber, electrician, locksmith, or builder, most of your new business comes through inbound calls. But if you are not tracking those calls properly, you are leaving money on the table.
+Contractors live and die by their phone. Whether you are a plumber, electrician, locksmith, or appliance repair tech, most of your new business comes through inbound calls. But if you are not tracking those calls properly, you are leaving money on the table.
 
-Call tracking software tells you where your calls are coming from, how many you are getting, and — with the right tools — which ones are actually turning into jobs. This guide covers everything contractors need to know about call tracking, from basic setup to advanced AI-powered scoring.
+Call tracking software tells you where your calls are coming from, how many you are getting, and — with the right tools — which ones are actually turning into jobs. This guide covers how to choose the right call tracking setup for your trade business.
 
 ## Why Contractors Need Call Tracking
 
@@ -16,7 +16,7 @@ Call tracking software tells you where your calls are coming from, how many you 
 
 You might be spending money on Google Ads, SEO, a website, Google Business Profile, Facebook, and flyers all at the same time. Without call tracking, you have no idea which of those channels is driving the phone calls that actually bring in work.
 
-Call tracking assigns different phone numbers to different marketing channels. When a customer calls the number on your Google Ad, you know that call came from Google Ads. When someone calls the number on your website, you know they found you online. Simple.
+Call tracking assigns different phone numbers to different marketing channels. When a customer calls the number on your Google Ad, you know that call came from Google Ads. When someone calls the number on your website, you know they found you online.
 
 ### Stop wasting money on what does not work
 
@@ -26,17 +26,21 @@ Once you know which channels drive calls, you can cut spending on the ones that 
 
 If you have staff answering phones — a receptionist, office manager, or another tradie — call tracking shows you how they are handling inbound calls. Are calls being answered promptly? How long are conversations? Are callers being converted into bookings?
 
-## How Call Tracking Works
+## How to Choose a Call Tracking Platform
 
-The concept is straightforward:
+The right platform depends on your volume, your technical comfort, and whether you are managing your own marketing or working with a lead gen partner.
 
-1. You sign up for a call tracking platform
-2. The platform gives you one or more tracking phone numbers
-3. You use these numbers instead of (or in addition to) your regular business number
-4. When someone calls a tracking number, the platform forwards the call to your real phone and logs the details
-5. You see reports showing call volume, sources, duration, and recordings
+### If you are doing fewer than 50 calls a month
 
-From the customer's perspective, nothing changes. They call, you answer, and you book the job. The difference is that you now have data on every call.
+Start with CallRail. Twilio is overkill if you are not technical — it is a developer platform that gives you incredible flexibility, but you will spend more time configuring it than using it. CallRail gives you a working setup in 30 minutes.
+
+### If you are doing 50+ calls and want to keep costs down
+
+Twilio's pay-as-you-go model becomes cheaper at scale. Phone numbers cost about $1/month each, plus a few cents per minute. But you need someone technical to set it up — either you, a developer, or a lead gen partner who handles the infrastructure for you.
+
+### If you work with a lead gen partner
+
+Ask them what platform they use. A good lead gen partner handles all the call tracking infrastructure for you — they own the tracking numbers, record the calls, and report the results. Your job is to answer the phone and book the work. If they use [CallOutcome](/welcome) for scoring, they can share a proof dashboard with you directly so you can see every call and its outcome.
 
 ## Top Call Tracking Platforms for Contractors
 
@@ -44,22 +48,24 @@ From the customer's perspective, nothing changes. They call, you answer, and you
 
 CallRail is the most popular call tracking platform for small businesses and contractors in the US and Australia.
 
-**What you get:**
+What you get:
+
 - Local and toll-free tracking numbers
-- Dynamic number insertion for your website (swaps your number based on how the visitor arrived)
+- Dynamic number insertion for your website
 - Call recording
 - Basic call analytics and reporting
-- Integration with Google Ads and Google Analytics
+- Google Ads and Google Analytics integration
 
-**Pricing:** Starts around $45/month for 5 tracking numbers and 250 minutes of call recording.
+**Pricing:** Starts around $45/month for 5 tracking numbers and 250 minutes.
 
-**Best for:** Contractors who want reliable call tracking with good Google Ads integration.
+**Best for:** Contractors who want reliable call tracking with good Google Ads integration. For a detailed comparison of how CallRail pairs with scoring tools, see [CallRail vs CallOutcome](/blog/callrail-vs-calloutcome).
 
 ### Twilio
 
-Twilio is more of a developer platform than a turnkey solution, but it is incredibly flexible and often cheaper per minute.
+Twilio is a developer platform — incredibly flexible and often cheaper per minute, but it requires some technical ability to set up.
 
-**What you get:**
+What you get:
+
 - Phone numbers in virtually any country
 - Call recording
 - Programmable call routing
@@ -68,13 +74,14 @@ Twilio is more of a developer platform than a turnkey solution, but it is incred
 
 **Pricing:** Phone numbers from $1/month each, plus per-minute rates (usually a few cents per minute).
 
-**Best for:** Contractors who have someone technical on their team (or a lead gen partner) who can set it up.
+**Best for:** Contractors who have someone technical on their team (or a lead gen partner running infrastructure). I use Twilio across my own appliance repair lead gen sites in Toowoomba and a hot tub repair site in Spokane — the flexibility is worth it when you are managing multiple markets.
 
 ### WildJar
 
-WildJar is an Australian call tracking platform specifically designed for agencies and businesses in the Australian market.
+WildJar is an Australian call tracking platform designed for agencies and businesses in the Australian market.
 
-**What you get:**
+What you get:
+
 - Australian local and 1300/1800 numbers
 - Speech analytics
 - Call recording and transcription
@@ -100,7 +107,7 @@ This basic setup costs $30-50/month and gives you visibility into your two bigge
 
 Once you have the basics in place, you can get more sophisticated:
 
-- **Dynamic number insertion** shows different tracking numbers to visitors from different sources (Google organic, Google Ads, Facebook, direct). This requires a JavaScript snippet on your website.
+- **Dynamic number insertion** shows different tracking numbers to visitors from different sources (Google organic, Google Ads, Facebook, direct).
 - **Keyword-level tracking** tells you which Google Ads keywords are driving calls. Essential if you are spending more than $500/month on ads.
 - **Multi-channel attribution** connects call data with your CRM to show the full customer journey from first click to booked job.
 
@@ -112,7 +119,7 @@ Here is where most call tracking setups fall short. They tell you a call happene
 
 If you are managing your own marketing, knowing your booking rate helps you understand the quality of leads you are generating. A Google Ads campaign that drives 40 calls with a 50% booking rate is far more valuable than one that drives 60 calls with a 10% booking rate.
 
-If you are working with a lead gen partner or agency, booking data settles billing disputes. Your lead gen partner says they sent you 30 leads. You say only 10 were real. With call scoring data, you both have access to the truth.
+If you are working with a lead gen partner or agency, booking data settles billing disputes. Your lead gen partner says they sent you 30 leads. You say only 10 were real. With [call scoring data](/blog/how-to-track-call-conversions-for-lead-gen), you both have access to the truth.
 
 ### How AI call scoring fills the gap
 
@@ -129,14 +136,9 @@ The process works like this:
 
 ### What AI scoring looks like in practice
 
-Imagine you are a locksmith who received 25 calls this week. Instead of listening to 25 recordings (that is over an hour of your time), you open your dashboard and see:
+I run 3 appliance repair lead gen sites in Toowoomba. Those sites generate about 30 calls a week across two tradie partners. Instead of listening to every recording — which used to eat 2.5 hours of my week — I check the dashboard and see exactly how many booked, how many did not, and the full transcript for anything I want to verify.
 
-- 14 calls scored as Job Booked
-- 7 calls scored as Not Booked (enquiries that did not convert)
-- 3 voicemails
-- 1 spam call
-
-You can click into any call to read the full transcript if you want details. But the headline number — 14 booked jobs from 25 calls — tells you immediately how your marketing is performing.
+Between a third and half of answered calls book a job. That is the number that matters — not call volume, not duration.
 
 ## Setting Up Call Tracking: Step by Step
 
@@ -177,17 +179,6 @@ Call tracking is only useful if you actually look at the reports. Set a weekly r
 ### Not recording calls
 
 Some contractors skip call recording because they are worried about privacy. In Australia, you are legally allowed to record calls as long as one party (you) consents — and it is best practice to inform the caller with a brief message. Recordings are invaluable for training, quality control, and resolving disputes.
-
-## What to Look For in a Call Tracking Platform
-
-When choosing a platform, prioritise:
-
-1. **Reliability** — Calls must connect every time. Test the platform with a few numbers before going all-in.
-2. **Australian number availability** — Make sure you can get local numbers in your area code.
-3. **Call recording** — Non-negotiable for conversion tracking and dispute resolution.
-4. **Reporting** — You need a dashboard that shows call volume, sources, and trends at a glance.
-5. **Integration** — If you use Google Ads, make sure the platform integrates for conversion tracking.
-6. **Pricing transparency** — Avoid platforms that hide per-minute charges or charge premium rates for basic features.
 
 ## Getting Started
 

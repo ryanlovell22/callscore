@@ -10,6 +10,16 @@ You have probably heard that AI can listen to phone calls and tell you whether a
 
 This article breaks down the technology behind AI call scoring in plain English. No computer science degree required — just a clear explanation of each step and why it matters for lead gen operators.
 
+## What I Expected vs What Actually Happened
+
+Before I built CallOutcome, I was reviewing calls the old-fashioned way. About 30 calls a week across 3 appliance repair lead gen sites in Toowoomba, plus a hot tub repair site in Spokane. At roughly 5 minutes per call (listening, noting the outcome, updating my records), I was burning 2.5 hours every week on something a machine should be doing.
+
+When I first set up AI scoring on my own calls, I expected to spend a lot of time correcting mistakes. I figured the AI would struggle with Australian accents, tradies talking over customers, and calls with background noise from job sites.
+
+It handled all of that better than I expected. The vast majority of calls — well over 90% — got classified correctly without me touching anything. The ones it flagged as low confidence were genuinely ambiguous calls where even I would have had to think about it.
+
+The relief was not just the time saved. It was not having to dread that 2.5-hour block each week. Now I check the dashboard, glance at anything flagged for review, and move on.
+
 ## The Three Steps of AI Call Scoring
 
 Every AI-scored call goes through three stages:
@@ -18,54 +28,37 @@ Every AI-scored call goes through three stages:
 2. **Transcription** — the recording is converted to text
 3. **Classification** — AI reads the text and determines the outcome
 
-Let's walk through each one.
+Here is how each one works.
 
 ## Step 1: Audio Capture
 
 Before AI can analyse a call, it needs a recording. This is handled by your existing call tracking platform — CallRail, Twilio, or whichever service you use.
 
-When a customer calls one of your tracking numbers, the platform records the conversation (both sides) and stores the audio file. Most platforms store recordings as standard audio files (MP3 or WAV) that can be accessed via their API.
+When a customer calls one of your tracking numbers, the platform records the conversation (both sides) and stores the audio file. Most platforms store recordings as standard audio files that can be accessed via their API.
 
 ### Quality matters
 
-The accuracy of everything that follows depends on audio quality. Clear recordings with minimal background noise produce better transcripts, which produce more accurate classifications.
-
-Factors that affect recording quality:
-
-- **Phone signal strength:** Calls with poor mobile reception produce noisy audio
-- **Speakerphone:** Calls on speakerphone tend to be harder to transcribe accurately
-- **Background noise:** Construction sites, busy roads, and crowded shops add noise
-- **Hold music:** If a caller is placed on hold, the music can confuse transcription
-
-For most business calls — someone ringing a tradie from their home or office — audio quality is perfectly fine. Edge cases with heavy noise might occasionally need a manual review.
+The accuracy of everything that follows depends on audio quality. Clear recordings with minimal background noise produce better transcripts, which produce more accurate classifications. For most business calls — someone ringing a tradie from their home or office — audio quality is perfectly fine. Edge cases with heavy noise might occasionally need a manual review.
 
 ## Step 2: Transcription (Speech to Text)
 
-Once the recording is captured, it needs to be converted from audio into text. This is where speech-to-text AI comes in.
+Once the recording is captured, it needs to be converted from audio into text.
 
-### How modern speech-to-text works
+### How it works
 
-Modern transcription services use deep learning models trained on millions of hours of recorded speech. These models have learned to recognise speech patterns across different accents, speaking speeds, vocabularies, and audio conditions.
+Modern transcription services use deep learning models trained on millions of hours of recorded speech. These models recognise speech patterns across different accents, speaking speeds, and audio conditions. The audio is processed in chunks, words are predicted, and the chunks are stitched together into a complete transcript.
 
-The transcription process:
-
-1. The audio file is sent to the transcription service
-2. The AI model processes the audio in small chunks (usually a few seconds at a time)
-3. For each chunk, the model predicts the most likely words being spoken
-4. The chunks are stitched together into a complete transcript
-5. Speaker diarisation identifies who said what (Caller vs Business)
-
-### Speaker diarisation
+### Speaker diarisation — who said what
 
 For call scoring, it is not enough to know what was said — you need to know who said it. If the caller says "Can you come on Tuesday?" that is a request. If the business says "I can come on Tuesday" that is an offer. The meaning changes based on who is speaking.
 
-Speaker diarisation is the process of labelling each segment of the transcript with the speaker. Modern models handle this well for two-person phone calls, where there is a clear caller and a clear business representative.
+Speaker diarisation labels each segment of the transcript with the speaker (Caller vs Business). Modern models handle this well for two-person phone calls.
 
-### Accuracy of modern transcription
+### Accuracy
 
 Current speech-to-text models achieve word error rates below 5% for clear English audio. That means in a typical 200-word call transcript, you might see 5-10 words that are slightly off. But the overall meaning is preserved — and that is what matters for classification.
 
-Australian accents and slang are handled well by major transcription services, though the occasional local term might get transcribed phonetically. This rarely affects the classification outcome because the AI scorer looks at overall conversational context, not individual words.
+Australian accents and slang are handled well by major transcription services. The occasional local term might get transcribed phonetically, but this rarely affects the classification because the AI scorer looks at overall conversational context, not individual words.
 
 ## Step 3: Classification (Did a Job Get Booked?)
 
@@ -73,7 +66,7 @@ This is the step that matters most to lead gen operators. The AI reads the compl
 
 ### What the AI is looking for
 
-The classification model analyses the transcript for signals that indicate a booking was made. These include:
+The classification model analyses the transcript for signals that indicate a booking was made:
 
 **Positive signals (suggesting a job was booked):**
 
@@ -102,7 +95,7 @@ The classification model analyses the transcript for signals that indicate a boo
 
 The classification model does not simply count keywords. It processes the entire transcript and builds an understanding of what happened in the conversation.
 
-Think of it like this: if you read a call transcript, you would quickly understand whether a job was booked. You would pick up on the flow of the conversation — did the caller ask for service, did the business offer a time, did both sides agree? The AI does the same thing, just faster and at scale.
+Think of it like this: if you read a call transcript, you would quickly understand whether a job was booked. You would pick up on the flow — did the caller ask for service, did the business offer a time, did both sides agree? The AI does the same thing, just faster and at scale.
 
 The model assigns one of several classifications:
 
@@ -139,11 +132,11 @@ A call where the customer says "Yeah, Thursday at 2 works, I'll leave the side g
 
 The same word can mean completely different things depending on context:
 
-- "I'll **book** that in" → booking
-- "I was hoping to **book** but you're too far away" → not a booking
-- "My neighbour **booked** you last week, how did it go?" → not a new booking
+- "I'll **book** that in" — booking
+- "I was hoping to **book** but you're too far away" — not a booking
+- "My neighbour **booked** you last week, how did it go?" — not a new booking
 
-AI models understand these differences because they process the full conversation, not isolated words.
+AI models understand these differences because they process the full conversation, not isolated words. For more on why this matters for billing, see [how to prove lead quality to clients](/blog/how-to-prove-lead-quality-to-clients).
 
 ## How CallOutcome Implements This
 
@@ -163,13 +156,15 @@ CallOutcome's pipeline works as follows:
 
 ## Accuracy in the Real World
 
-No AI system is perfect, but modern call scoring achieves accuracy rates above 95% for standard business calls. Here is what affects accuracy:
+Perfect accuracy does not exist. But 95% with a 2-minute manual override beats 2.5 hours of listening every week. That is the trade-off, and it is not even close.
+
+Here is what affects accuracy in practice:
 
 ### Factors that improve accuracy
 
 - Clear audio quality
 - Calls in English
-- Standard business conversations (enquiry → discussion → booking or decline)
+- Standard business conversations (enquiry, discussion, booking or decline)
 - Calls with a clear outcome (job confirmed or clearly declined)
 
 ### Factors that reduce accuracy
@@ -202,9 +197,9 @@ If you are recording calls in Australia, make sure you comply with relevant tele
 
 ## Getting Started with AI Call Scoring
 
-If you are currently listening to call recordings manually, the time savings alone make AI scoring worthwhile. An operator handling 100 calls per month can save 3-4 hours of manual review per week.
+If you are currently listening to call recordings manually, the time savings alone make AI scoring worthwhile. I went from 2.5 hours a week to about 10 minutes of spot-checking low-confidence calls.
 
-If you are billing clients per lead and dealing with disputes, the proof system pays for itself the first time a client accepts an invoice without pushback.
+If you are billing clients per lead and dealing with disputes, the proof system pays for itself the first time a client accepts an invoice without pushback. For a detailed walkthrough of how to set that up, see [how to prove lead quality to clients](/blog/how-to-prove-lead-quality-to-clients). And if you are comparing this against CallRail's built-in tools, see our [CallRail vs CallOutcome breakdown](/blog/callrail-vs-calloutcome).
 
 [CallOutcome's free plan](/welcome) scores 10 calls per month — enough to see the accuracy and value before scaling up. Connect your CallRail or Twilio account in under 5 minutes and let the AI do the work.
 

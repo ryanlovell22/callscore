@@ -28,13 +28,13 @@ CallRail is a call tracking and analytics platform. Its core job is to tell you 
 
 CallRail tells you a call happened and where it came from. What it does not do well is tell you what happened on the call — specifically, whether the caller booked a job.
 
-CallRail does offer some basic automation features like keyword spotting (flagging calls that mention certain words), but this is a far cry from understanding conversational context. A call where someone says "I would like to book a plumber for Tuesday" and a call where someone says "I tried to book online but it did not work, never mind" both contain the word "book," but have completely different outcomes.
+CallRail offers a premium "Conversation Intelligence" add-on that transcribes calls and can classify them using keywords or simple rules. This is better than nothing, but it still relies on rule-based logic rather than true natural language understanding. A call where someone says "I would like to book a plumber for Tuesday" and a call where someone says "I tried to book online but it did not work, never mind" both contain the word "book," but have completely different outcomes.
 
-CallRail also offers a premium "Conversation Intelligence" add-on that transcribes calls and can classify them using keywords or simple rules. This is better than keyword spotting alone, but it still relies on rule-based logic rather than true natural language understanding.
+CallRail's CI is built for marketing teams at mid-size companies who want call analytics layered onto their attribution data. If you are a solo operator running rank-and-rent sites, you are paying for features you will never touch.
 
 ## What CallOutcome Does
 
-CallOutcome is an AI call scoring platform built specifically for lead gen operators. Its core job is to tell you which calls resulted in a booked job — and to prove it.
+CallOutcome is an AI call scoring platform built specifically for lead gen operators. Its core job is to tell you which calls resulted in a booked job — and to [prove it to your clients](/blog/how-to-prove-lead-quality-to-clients).
 
 ### Core features
 
@@ -79,7 +79,7 @@ You need a call tracking platform if:
 - You want to know which marketing channels drive the most calls
 - You need call routing (forwarding calls to different numbers based on time, location, etc.)
 
-If you are doing any kind of paid advertising for your lead gen sites, call tracking is non-negotiable. You need to know your cost per lead at the channel level.
+If you are doing any kind of paid advertising for your lead gen sites, call tracking is non-negotiable. You need to know your cost per lead at the channel level. For a full breakdown of platform options, see our [call tracking guide for contractors](/blog/call-tracking-software-for-contractors).
 
 ## When You Need CallOutcome
 
@@ -91,7 +91,7 @@ You need call scoring if:
 - You are spending hours manually listening to call recordings
 - You want to identify which clients are converting well and which are not
 
-If you are a lead gen operator, agency, or rank-and-rent site owner who bills per lead, call scoring is the tool that turns "I sent you 40 calls" into "I sent you 40 calls, 26 of which booked a job — here is the proof."
+If you are a lead gen operator, agency, or rank-and-rent site owner who bills per lead, call scoring is the tool that turns "I sent you 30 calls" into "I sent you 30 calls, 17 of which booked a job — here is the proof."
 
 ## How They Work Together
 
@@ -134,6 +134,10 @@ Additional costs for extra numbers and minutes beyond your plan limits.
 - **Starter:** $29/month (100 calls, unlimited lines)
 - **Pro:** $79/month (500 calls, dashboard share links)
 - **Agency:** $149/month (1,500 calls, unlimited everything)
+
+### Real cost comparison for a lead gen operator
+
+I run 3 appliance repair sites in Toowoomba plus a hot tub repair site in Spokane. Across those, I handle about 30 calls per week per market. CallRail's Conversation Intelligence add-on would cost me $100-195/month on top of my tracking plan just for basic keyword-matching classification. CallOutcome's Starter plan handles all my calls at $29/month with full AI context analysis, proof dashboards, and partner logins. For [tracking conversions properly](/blog/how-to-track-call-conversions-for-lead-gen), the cost difference is significant.
 
 ### Total cost for a typical lead gen operator
 

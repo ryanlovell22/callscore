@@ -50,22 +50,79 @@
         body {
             background: linear-gradient(180deg, var(--pico-background-color) 0%, rgba(16, 149, 193, 0.03) 50%, var(--pico-background-color) 100%);
         }
+
+        /* Readable content column */
+        .post-content {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
         .post-header {
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
+        }
+        .post-header h1 {
+            font-size: 2.2rem;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
         }
         .post-meta {
             color: var(--pico-muted-color);
             font-size: 0.9rem;
         }
-        article img {
+
+        /* Article typography */
+        .post-body {
+            font-size: 1.08rem;
+            line-height: 1.8;
+            color: var(--pico-color);
+        }
+        .post-body p {
+            margin-bottom: 1.4rem;
+        }
+        .post-body h2 {
+            font-size: 1.6rem;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .post-body h2:first-of-type {
+            border-top: none;
+        }
+        .post-body h3 {
+            font-size: 1.25rem;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+        .post-body ul, .post-body ol {
+            margin-bottom: 1.4rem;
+            padding-left: 1.5rem;
+        }
+        .post-body li {
+            margin-bottom: 0.4rem;
+            line-height: 1.7;
+        }
+        .post-body strong {
+            color: var(--pico-primary);
+        }
+        .post-body a {
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .post-body table {
+            font-size: 0.95rem;
+            margin: 1.5rem 0;
+        }
+        .post-body img {
             max-width: 100%;
             height: auto;
             border-radius: 8px;
         }
+
         .cta-section {
             text-align: center;
             padding: 3rem 0;
-            margin-top: 2rem;
+            margin-top: 2.5rem;
             border-top: 1px solid var(--pico-muted-border-color);
         }
         .back-link {
@@ -91,6 +148,7 @@
             font-size: 0.85rem;
         }
         @media (max-width: 768px) {
+            .post-header h1 { font-size: 1.6rem; }
             .nav-anchor { display: none; }
             .footer-inner { flex-direction: column; text-align: center; }
         }
@@ -112,23 +170,25 @@
     </header>
 
     <main class="container">
-        <div class="post-header">
-            <h1>{{ post.title }}</h1>
-            <p class="post-meta">{{ post.date }} &mdash; {{ post.author }}</p>
+        <div class="post-content">
+            <div class="post-header">
+                <h1>{{ post.title }}</h1>
+                <p class="post-meta">{{ post.date }} &mdash; {{ post.author }}</p>
+            </div>
+
+            <div class="post-body">
+                {{ content|safe }}
+            </div>
+
+            <!-- CTA -->
+            <section class="cta-section">
+                <h2>Ready to start scoring your calls?</h2>
+                <p>AI analyses every call and tells you which ones booked a job. Try it free.</p>
+                <a href="/auth/signup" role="button" style="font-size: 1.1rem; padding: 0.75rem 2rem;">Get Started Free</a>
+            </section>
+
+            <a href="/blog/" class="back-link">&larr; Back to Blog</a>
         </div>
-
-        <article>
-            {{ content|safe }}
-        </article>
-
-        <!-- CTA -->
-        <section class="cta-section">
-            <h2>Ready to start scoring your calls?</h2>
-            <p>AI analyses every call and tells you which ones booked a job. Try it free.</p>
-            <a href="/auth/signup" role="button" style="font-size: 1.1rem; padding: 0.75rem 2rem;">Get Started Free</a>
-        </section>
-
-        <a href="/blog/" class="back-link">&larr; Back to Blog</a>
     </main>
 
     <footer class="container">

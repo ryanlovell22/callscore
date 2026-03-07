@@ -18,9 +18,9 @@ That gap is where money gets lost.
 
 ### The billing dispute problem
 
-Here is a scenario every lead gen operator has lived through: you send a client 50 calls in a month and invoice them for 50 leads. They push back, claiming half those calls were tyre-kickers, wrong numbers, or existing customers calling back. Without proof, you are stuck negotiating.
+I run 3 appliance repair lead gen sites in Toowoomba and a hot tub repair site in Spokane, Washington. Across the Toowoomba sites, I send about 30 calls a week to two tradie partners. They pay $50 per booked job and $12.50 per missed call. Without knowing exactly which calls booked, I would be guessing on every invoice — and guessing is how you lose clients.
 
-When you track conversions properly, you have the data to back up every invoice. You know exactly which calls booked, which did not, and why.
+When you track conversions properly, you have the data to back up every line item. You know exactly which calls booked, which did not, and why.
 
 ### The optimisation problem
 
@@ -44,13 +44,11 @@ A call tracking platform like CallRail or Twilio assigns unique phone numbers to
 
 This is essential, but it only tells you *that* a call happened — not whether it converted.
 
-### Using call duration as a rough proxy
+### Why duration-based tracking is not enough
 
-Many operators use call duration as a basic conversion indicator. The logic is simple: a 30-second call was probably a wrong number, while a 5-minute call likely involved a real conversation about booking a job.
+Duration-based tracking is lazy. A 3-minute call where someone asks for a quote and hangs up is not a lead. A 45-second call where someone says "Can you come tomorrow morning?" and the tradie says "Yep, 8am" is a booked job. Stop counting duration as a conversion metric.
 
-You can set duration thresholds in most call tracking platforms — for example, only counting calls over 90 seconds as "qualified leads."
-
-The problem? Duration is a blunt instrument. A 4-minute call where the tradie was busy and asked the caller to ring back is not a conversion. A 45-second call where someone quickly books a time slot is. Duration tells you something, but it is far from accurate.
+You can set duration thresholds in most call tracking platforms — only counting calls over 90 seconds as "qualified leads" — but you will overcount junk calls and undercount fast bookings. Duration tells you something happened. It does not tell you what.
 
 ## Level 2: Manual Call Review
 
@@ -62,9 +60,9 @@ You (or someone on your team) listens to each recording, notes whether a job was
 
 ### Why manual review does not scale
 
-Manual review is accurate, but it is painfully slow. At 2-3 minutes per call (including listening time and note-taking), reviewing 100 calls takes over 4 hours. If you are running 10+ lead gen sites, you could easily spend an entire day each week just listening to recordings.
+Before I built CallOutcome, I was listening to every recorded call myself. About 30 calls a week at roughly 5 minutes each — that is 2.5 hours every week just to figure out what happened on calls I did not even take. That time is better spent building new sites or closing new clients.
 
-That time is better spent building new sites, optimising existing ones, or closing new clients.
+If you are running 10+ lead gen sites, manual review becomes a second job.
 
 ## Level 3: AI-Powered Call Scoring
 
@@ -79,13 +77,13 @@ The process is straightforward:
 3. AI reads the full transcript and classifies the call (Job Booked, Not Booked, Voicemail, etc.)
 4. Results appear on your dashboard within minutes
 
-The AI does not just look for keywords like "yes" or "book." It understands conversational context — whether a specific time was agreed on, whether the caller confirmed they want the service, whether the tradie committed to showing up.
+The AI does not just look for keywords like "yes" or "book." It understands conversational context — whether a specific time was agreed on, whether the caller confirmed they want the service, whether the tradie committed to showing up. For a deeper look at the technology, see [how AI call scoring actually works](/blog/how-ai-call-scoring-works).
 
 ### The accuracy question
 
 Modern AI transcription and classification is remarkably accurate — well above 95% for clear calls in English. The occasional edge case (a mumbled conversation, heavy background noise) might need a manual override, but the vast majority of calls get classified correctly without any human input.
 
-[CallOutcome](/welcome) uses this approach, combining Twilio's transcription with AI classification to score every call automatically. You get a dashboard showing exactly which calls booked and which did not, complete with full transcripts you can review if needed.
+[CallOutcome](/welcome) uses this approach, combining transcription with AI classification to score every call automatically. You get a dashboard showing exactly which calls booked and which did not, complete with full transcripts you can review if needed.
 
 ## Setting Up Your Call Conversion Tracking Stack
 
@@ -112,7 +110,7 @@ Rather than building your own classification system, use a purpose-built tool. [
 
 ### Step 4: Set up your proof dashboard
 
-Once calls are being scored, you need a way to share results with your clients. A proof dashboard shows:
+Once calls are being scored, you need a way to share results with your clients. A [proof dashboard](/blog/how-to-prove-lead-quality-to-clients) shows:
 
 - Total calls received
 - How many booked a job
@@ -137,11 +135,11 @@ This is valuable intelligence you can share with your client to improve their re
 
 ### Price your leads accurately
 
-When you know your true conversion rate, you can price leads more precisely. If 60% of your calls book a job and you are charging $50 per lead, you know each booked job costs your client about $83 in lead fees. That helps you set prices that are fair for both sides.
+When you know your true conversion rate, you can price leads more precisely. Between a third and half of the answered calls across my Toowoomba sites book a job. At $50 per booked job and $12.50 per missed call, I know exactly what each lead costs my partners — and I can show them the maths. That is how you set prices that stick.
 
 ## Common Mistakes to Avoid
 
-**Relying solely on call duration.** As covered above, duration is a rough proxy at best. Use it as a filter, not a conversion metric.
+**Relying solely on call duration.** Duration is a rough proxy at best. A short call can be a booking, a long call can be a tyre-kicker. Use duration as a filter, not a conversion metric.
 
 **Not recording calls.** Without recordings, you have no way to verify conversions or resolve disputes. Always record (with proper disclosure).
 
