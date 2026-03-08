@@ -151,6 +151,6 @@ Send your partner a link to their proof dashboard alongside every invoice. Let t
 
 Pay per call lead generation is a proven model. The operators who succeed long-term are the ones who solve the tracking and billing problem early — before disputes erode trust and partners walk away.
 
-If you are already running pay per call sites, connect your CallRail or Twilio account to [CallOutcome](/welcome) and start scoring calls today. The free plan handles 10 calls per month. If you are evaluating call tracking platforms, see our [CallRail vs CallOutcome comparison](/blog/callrail-vs-calloutcome) and [CallRail alternatives guide](/blog/callrail-alternatives).
+If you are already running pay per call sites, connect your CallRail or Twilio account to [CallOutcome](/welcome) and start scoring calls today. The free plan handles 10 calls per month. If you are evaluating call tracking platforms, see our [CallRail vs CallOutcome comparison](/blog/callrail-vs-calloutcome) and [CallRail alternatives guide](/blog/callrail-alternatives). To see real numbers from a live pay per call operation, read our [rank-and-rent call scoring case study](/blog/case-study-rank-and-rent-call-scoring).
 
 Stop guessing which calls booked. Start proving it.
