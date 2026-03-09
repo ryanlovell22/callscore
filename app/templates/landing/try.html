@@ -156,6 +156,122 @@
             margin: 0;
         }
 
+        /* Dashboard preview */
+        .dashboard-preview {
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 0 1rem;
+        }
+        .dashboard-preview img {
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .dashboard-preview .caption {
+            font-size: 0.9rem;
+            color: var(--pico-muted-color);
+            margin-top: 0.75rem;
+        }
+
+        /* Pricing strip */
+        .pricing-strip {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 0;
+            text-align: center;
+        }
+        .pricing-strip h2 {
+            margin-bottom: 1.5rem;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+        .pricing-card {
+            padding: 1.25rem 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            position: relative;
+        }
+        .pricing-card.highlight {
+            border-color: var(--pico-primary);
+            background: rgba(16, 149, 193, 0.06);
+        }
+        .pricing-badge {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--pico-primary);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 2px 10px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+        .pricing-card h4 {
+            margin-bottom: 0.25rem;
+        }
+        .pricing-card .price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--pico-primary);
+        }
+        .pricing-card .calls {
+            font-size: 0.85rem;
+            color: var(--pico-muted-color);
+        }
+
+        /* Comparison table */
+        .comparison-section {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 0;
+        }
+        .comparison-section h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .comparison-section table {
+            font-size: 0.9rem;
+        }
+        .comparison-section th,
+        .comparison-section td {
+            padding: 0.6rem 0.75rem;
+            vertical-align: top;
+        }
+        .comparison-section thead th:last-child {
+            color: var(--pico-primary);
+        }
+
+        /* FAQ */
+        .faq-section {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 2rem 0;
+        }
+        .faq-section h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .faq-section details {
+            margin-bottom: 0.5rem;
+        }
+        .faq-section summary {
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .faq-section details p {
+            color: var(--pico-muted-color);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
         /* Social proof */
         .proof-bar {
             display: grid;
@@ -237,7 +353,10 @@
         @media (max-width: 768px) {
             .try-hero h1 { font-size: 1.8rem; }
             .solution-steps { grid-template-columns: 1fr; }
+            .pricing-grid { grid-template-columns: repeat(2, 1fr); }
             .proof-bar { grid-template-columns: 1fr; gap: 1rem; }
+            .comparison-section { overflow-x: auto; }
+            .comparison-section table { min-width: 500px; }
         }
     </style>
 </head>
@@ -320,6 +439,87 @@
             </div>
         </section>
 
+        <!-- Dashboard preview -->
+        <section class="dashboard-preview">
+            <img src="{{ url_for('static', filename='dashboard-preview.png') }}" alt="CallOutcome dashboard showing call classifications, transcripts, and lead value" loading="lazy" width="2220" height="1710">
+            <p class="caption">Real dashboard — every call scored, classified, and ready to share.</p>
+        </section>
+
+        <!-- Pricing -->
+        <section class="pricing-strip">
+            <h2>Simple Pricing. Start Free.</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card highlight">
+                    <span class="pricing-badge">Start here</span>
+                    <h4>Free</h4>
+                    <div class="price">$0</div>
+                    <div class="calls">10 calls/mo</div>
+                </div>
+                <div class="pricing-card">
+                    <h4>Starter</h4>
+                    <div class="price">$29/mo</div>
+                    <div class="calls">100 calls/mo</div>
+                </div>
+                <div class="pricing-card">
+                    <h4>Pro</h4>
+                    <div class="price">$79/mo</div>
+                    <div class="calls">500 calls/mo</div>
+                </div>
+                <div class="pricing-card">
+                    <h4>Agency</h4>
+                    <div class="price">$149/mo</div>
+                    <div class="calls">1,500 calls/mo</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison table -->
+        <section class="comparison-section">
+            <h2>How Does It Compare?</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Manual Review</th>
+                        <th>CallRail CI</th>
+                        <th>CallOutcome</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Transcripts</strong></td>
+                        <td>You listen</td>
+                        <td>Included</td>
+                        <td>Included</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Classification</strong></td>
+                        <td>You decide</td>
+                        <td>Keyword-based</td>
+                        <td>AI (booked / not / voicemail)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Partner proof</strong></td>
+                        <td>Spreadsheet</td>
+                        <td>Not available</td>
+                        <td>Shareable dashboard link</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Setup</strong></td>
+                        <td>N/A</td>
+                        <td>15+ min</td>
+                        <td>Under 2 min</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Price</strong></td>
+                        <td>Your time</td>
+                        <td>$100+/mo extra</td>
+                        <td>Free – $29/mo</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
         <!-- Social proof -->
         {% if total_calls > 0 %}
         <section>
@@ -346,6 +546,46 @@
                 "I was spending hours every week listening to call recordings just to classify each one. Now the AI does it in minutes and my partners can see the proof dashboard themselves. No disputes, no guesswork."
             </blockquote>
             <cite>— Built and used daily by a rank-and-rent operator running 20+ sites</cite>
+        </section>
+
+        <!-- FAQ -->
+        <section class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+
+            <details>
+                <summary>How accurate is the AI?</summary>
+                <p>95%+ accuracy on job booked vs. not booked classification. Every call also has a manual override if you disagree with the AI's assessment.</p>
+            </details>
+
+            <details>
+                <summary>What call sources do you support?</summary>
+                <p>Twilio and CallRail. Connect either in under 2 minutes during onboarding — just paste your API credentials.</p>
+            </details>
+
+            <details>
+                <summary>What does the free plan include?</summary>
+                <p>10 calls per month with full transcripts, AI classification, and partner proof dashboards. No credit card required.</p>
+            </details>
+
+            <details>
+                <summary>How is this different from CallRail CI?</summary>
+                <p>CallRail's Conversation Intelligence costs $100+/month extra and is built for marketing teams with keyword spotting. CallOutcome answers one question: did this call book a job? From $29/month.</p>
+            </details>
+
+            <details>
+                <summary>Can my partners see the results?</summary>
+                <p>Yes. Generate a shareable proof dashboard link — your partners can view call outcomes and transcripts without creating an account or logging in.</p>
+            </details>
+
+            <details>
+                <summary>How long does setup take?</summary>
+                <p>Under 2 minutes. Connect your Twilio or CallRail account, and CallOutcome starts processing your call recordings automatically.</p>
+            </details>
+
+            <details>
+                <summary>Is my data secure?</summary>
+                <p>Credentials are encrypted, all data is isolated per account, and we never share your call recordings or transcripts with third parties.</p>
+            </details>
         </section>
 
         <!-- Final CTA -->
