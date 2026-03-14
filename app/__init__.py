@@ -115,9 +115,6 @@ def create_app():
     def robots_txt():
         body = (
             "User-agent: *\n"
-            "Allow: /welcome\n"
-            "Allow: /try\n"
-            "Allow: /blog/\n"
             "Disallow: /dashboard\n"
             "Disallow: /auth/\n"
             "Disallow: /onboarding\n"
