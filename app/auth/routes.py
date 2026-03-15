@@ -17,7 +17,7 @@ def google_login():
     if not hasattr(oauth, 'google'):
         flash("Google sign-in is not configured.", "error")
         return redirect(url_for("auth.login"))
-    redirect_uri = url_for("auth.google_callback", _external=True)
+    redirect_uri = url_for("auth.google_callback", _external=True, _scheme="https" if request.host != "127.0.0.1:5099" else "http")
     return oauth.google.authorize_redirect(redirect_uri)
 
 
