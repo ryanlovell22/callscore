@@ -4,7 +4,7 @@ from collections import Counter
 from datetime import datetime, timezone
 
 from authlib.integrations.flask_client import OAuth
-from flask import Flask, redirect, render_template, Response, abort, url_for
+from flask import Flask, redirect, render_template, request, Response, abort, url_for
 from flask_login import LoginManager, login_required, current_user
 from flask_migrate import Migrate
 
@@ -97,6 +97,16 @@ def create_app():
     # Global UTM capture — runs on every request so UTMs are captured
     # regardless of which page the visitor lands on
     from .utm_utils import capture_utm
+
+    @app.before_request
+    def redirect_www():
+        """Redirect www.calloutcome.com to calloutcome.com (SEO: single canonical domain)."""
+        if request.host.startswith('www.'):
+            from urllib.parse import urlparse, urlunparse
+            parsed = urlparse(request.url)
+            new_host = parsed.netloc.replace('www.', '', 1)
+            new_url = urlunparse(parsed._replace(netloc=new_host))
+            return redirect(new_url, code=301)
 
     @app.before_request
     def global_utm_capture():
