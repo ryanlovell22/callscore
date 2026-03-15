@@ -261,6 +261,77 @@ def callrail_callback():
     return jsonify({"status": "ok"}), 200
 
 
+@bp.route("/resend-inbound", methods=["POST"])
+def resend_inbound():
+    """Forward inbound emails from Resend to admin inbox."""
+    import resend as resend_sdk
+
+    data = request.json or {}
+    logger.info("Resend inbound webhook: type=%s", data.get("type"))
+
+    if data.get("type") != "email.received":
+        return jsonify({"status": "ignored"}), 200
+
+    event_data = data.get("data", {})
+    email_id = event_data.get("email_id")
+    if not email_id:
+        return jsonify({"error": "No email_id"}), 400
+
+    api_key = current_app.config.get("RESEND_API_KEY")
+    if not api_key:
+        logger.error("RESEND_API_KEY not configured")
+        return jsonify({"error": "Not configured"}), 500
+
+    resend_sdk.api_key = api_key
+    forward_to = "admin@lovelldigitalproperties.com"
+
+    try:
+        # Fetch full email content
+        email = resend_sdk.Emails.Receiving.get(email_id)
+
+        original_from = event_data.get("from", "unknown sender")
+        original_to = event_data.get("to", ["unknown"])
+        if isinstance(original_to, list):
+            original_to = ", ".join(original_to)
+        subject = event_data.get("subject", "(no subject)")
+
+        # Build forwarded email body
+        header_block = (
+            f"---------- Forwarded email ----------\n"
+            f"From: {original_from}\n"
+            f"To: {original_to}\n"
+            f"Subject: {subject}\n"
+            f"--------------------------------------\n\n"
+        )
+
+        # Prefer HTML, fall back to text
+        html_body = getattr(email, "html", None) or (email.get("html") if isinstance(email, dict) else None)
+        text_body = getattr(email, "text", None) or (email.get("text") if isinstance(email, dict) else None)
+
+        send_params = {
+            "from": f"CallOutcome Inbox <noreply@calloutcome.com>",
+            "to": [forward_to],
+            "reply_to": original_from,
+            "subject": f"Fwd: {subject}",
+        }
+
+        if html_body:
+            header_html = header_block.replace("\n", "<br>")
+            send_params["html"] = f"<pre>{header_html}</pre><hr>{html_body}"
+        elif text_body:
+            send_params["text"] = header_block + text_body
+        else:
+            send_params["text"] = header_block + "(empty email body)"
+
+        resend_sdk.Emails.send(send_params)
+        logger.info("Forwarded inbound email from %s to %s", original_from, forward_to)
+        return jsonify({"status": "forwarded"}), 200
+
+    except Exception as e:
+        logger.exception("Failed to forward inbound email %s: %s", email_id, e)
+        return jsonify({"error": str(e)}), 500
+
+
 @bp.route("/stripe", methods=["POST"])
 def stripe_webhook():
     """Handle Stripe webhook events."""
