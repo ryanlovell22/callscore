@@ -71,6 +71,7 @@ def main():
                 if count:
                     logger.info("Account %s: %d new recordings", account.id, count)
             except Exception as e:
+                db.session.rollback()
                 logger.exception("Error polling account %s: %s", account.id, e)
 
             try:
@@ -79,6 +80,7 @@ def main():
                 if missed_count:
                     logger.info("Account %s: %d missed calls", account.id, missed_count)
             except Exception as e:
+                db.session.rollback()
                 logger.exception("Error polling missed calls for account %s: %s", account.id, e)
 
             try:
@@ -87,6 +89,7 @@ def main():
                 if short_count:
                     logger.info("Account %s: %d short answered calls", account.id, short_count)
             except Exception as e:
+                db.session.rollback()
                 logger.exception("Error polling short calls for account %s: %s", account.id, e)
 
             try:
@@ -95,6 +98,7 @@ def main():
                 if retried_count:
                     logger.info("Account %s: retried %d failed submissions", account.id, retried_count)
             except Exception as e:
+                db.session.rollback()
                 logger.exception("Error retrying failed submissions for account %s: %s", account.id, e)
 
         logger.info(

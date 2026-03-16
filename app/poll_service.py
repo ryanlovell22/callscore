@@ -63,14 +63,20 @@ def poll_account(account, since):
     for rec in recordings:
         recording_sid = rec.get("sid")
 
-        # Skip if already in database
+        call_sid = rec.get("call_sid")
+
+        # Skip if already in database (check both recording_sid and call_sid)
         existing = Call.query.filter_by(
             account_id=account.id, twilio_recording_sid=recording_sid
         ).first()
         if existing:
             continue
-
-        call_sid = rec.get("call_sid")
+        if call_sid:
+            existing_by_sid = Call.query.filter_by(
+                account_id=account.id, twilio_call_sid=call_sid
+            ).first()
+            if existing_by_sid:
+                continue
         duration = int(rec.get("duration", 0))
 
         # Skip very short recordings (likely accidental dials)
@@ -116,72 +122,78 @@ def poll_account(account, since):
         if call_date and call_date.tzinfo is not None:
             call_date = call_date.astimezone(timezone.utc).replace(tzinfo=None)
 
-        # Create call record
-        call = Call(
-            account_id=account.id,
-            tracking_line_id=tracking_line.id if tracking_line else None,
-            twilio_call_sid=call_sid,
-            twilio_recording_sid=recording_sid,
-            caller_number=from_number,
-            call_duration=duration,
-            call_date=call_date,
-            recording_url=recording_url,
-            source="twilio",
-            status="processing",
-            call_outcome="answered",
-        )
-        db.session.add(call)
-        db.session.flush()  # Get the call ID
-
-        # Check usage limit before processing (costs ~$0.03-0.04/call)
-        if account.at_usage_limit:
-            call.status = "limit_reached"
-            logger.info(
-                "Account %s at limit, recording %s saved as limit_reached",
-                account.id, recording_sid,
+        try:
+            # Create call record
+            call = Call(
+                account_id=account.id,
+                tracking_line_id=tracking_line.id if tracking_line else None,
+                twilio_call_sid=call_sid,
+                twilio_recording_sid=recording_sid,
+                caller_number=from_number,
+                call_duration=duration,
+                call_date=call_date,
+                recording_url=recording_url,
+                source="twilio",
+                status="processing",
+                call_outcome="answered",
             )
-        else:
-            # Transcribe + classify via OpenAI
-            try:
-                transcript_text = transcribe_recording(
-                    recording_url + ".mp3",
-                    auth=(account.twilio_account_sid, account.twilio_auth_token),
-                )
-                call.full_transcript = transcript_text
+            db.session.add(call)
+            db.session.flush()  # Get the call ID
 
-                biz_name = (tracking_line.label or tracking_line.partner_name) if tracking_line else None
-                tradie = _get_tradie_name(tracking_line)
-                result = classify_transcript(transcript_text, business_name=biz_name, call_date=call_date, tradie_name=tradie)
-
-                call.classification = result.get("classification")
-                call.confidence = result.get("confidence")
-                call.summary = result.get("summary")
-                call.service_type = result.get("service_type")
-                call.urgent = result.get("urgent", False)
-                call.customer_name = result.get("customer_name")
-                call.customer_address = result.get("customer_address")
-                call.booking_time = result.get("booking_time")
-                call.booking_date = _parse_booking_date(result.get("booking_date"))
-                call.analysed_at = datetime.now(timezone.utc)
-                call.status = "completed"
-
-                if call.classification == "VOICEMAIL":
-                    call.call_outcome = "voicemail"
-
-                _increment_usage(account)
+            # Check usage limit before processing (costs ~$0.03-0.04/call)
+            if account.at_usage_limit:
+                call.status = "limit_reached"
                 logger.info(
-                    "Recording %s classified: %s (confidence: %s)",
-                    recording_sid, call.classification, call.confidence,
+                    "Account %s at limit, recording %s saved as limit_reached",
+                    account.id, recording_sid,
                 )
-            except Exception as e:
-                logger.error(
-                    "Failed to process recording %s: %s", recording_sid, e
-                )
-                call.status = "failed"
+            else:
+                # Transcribe + classify via OpenAI
+                try:
+                    transcript_text = transcribe_recording(
+                        recording_url + ".mp3",
+                        auth=(account.twilio_account_sid, account.twilio_auth_token),
+                    )
+                    call.full_transcript = transcript_text
 
-        new_count += 1
+                    biz_name = (tracking_line.label or tracking_line.partner_name) if tracking_line else None
+                    tradie = _get_tradie_name(tracking_line)
+                    result = classify_transcript(transcript_text, business_name=biz_name, call_date=call_date, tradie_name=tradie)
 
-    db.session.commit()
+                    call.classification = result.get("classification")
+                    call.confidence = result.get("confidence")
+                    call.summary = result.get("summary")
+                    call.service_type = result.get("service_type")
+                    call.urgent = result.get("urgent", False)
+                    call.customer_name = result.get("customer_name")
+                    call.customer_address = result.get("customer_address")
+                    call.booking_time = result.get("booking_time")
+                    call.booking_date = _parse_booking_date(result.get("booking_date"))
+                    call.analysed_at = datetime.now(timezone.utc)
+                    call.status = "completed"
+
+                    if call.classification == "VOICEMAIL":
+                        call.call_outcome = "voicemail"
+
+                    _increment_usage(account)
+                    logger.info(
+                        "Recording %s classified: %s (confidence: %s)",
+                        recording_sid, call.classification, call.confidence,
+                    )
+                except Exception as e:
+                    logger.error(
+                        "Failed to process recording %s: %s", recording_sid, e
+                    )
+                    call.status = "failed"
+
+            db.session.commit()
+            new_count += 1
+        except Exception as e:
+            db.session.rollback()
+            logger.warning(
+                "Skipping recording %s (call %s): %s", recording_sid, call_sid, e
+            )
+
     return new_count
 
 
