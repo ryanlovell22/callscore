@@ -54,6 +54,10 @@ def public_dashboard(share_token):
     qs_date_to = request.args.get("date_to")
     active_period = None
 
+    # Default to "this_week" when no filters are specified
+    if not period and not qs_date_from and not qs_date_to:
+        period = "this_week"
+
     if period == "this_week":
         # Monday of current week to today
         active_period = "this_week"
@@ -290,6 +294,10 @@ def public_dashboard_export(share_token):
     period = request.args.get("period")
     qs_date_from = request.args.get("date_from")
     qs_date_to = request.args.get("date_to")
+
+    # Default to "this_week" when no filters are specified
+    if not period and not qs_date_from and not qs_date_to:
+        period = "this_week"
 
     start_date = None
     end_date = None
