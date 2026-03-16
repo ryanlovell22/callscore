@@ -29,7 +29,7 @@ def index():
 
         # If token field is blank or matches the masked placeholder, keep existing
         if not token_input or token_input.startswith("••••"):
-            token = account.twilio_auth_token_encrypted
+            token = account.twilio_auth_token  # Decrypts from DB
         else:
             token = token_input
 
@@ -46,9 +46,9 @@ def index():
             )
             return redirect(url_for("settings.index"))
 
-        # Save credentials
+        # Save credentials (encrypts via property setter)
         account.twilio_account_sid = sid
-        account.twilio_auth_token_encrypted = token
+        account.twilio_auth_token = token
         db.session.commit()
 
         if not account.twilio_service_sid:
@@ -86,7 +86,8 @@ def index():
     # GET — prepare display values
     masked_token = ""
     if account.twilio_auth_token_encrypted:
-        masked_token = "••••" + account.twilio_auth_token_encrypted[-4:]
+        decrypted = account.twilio_auth_token
+        masked_token = "••••" + decrypted[-4:] if decrypted else ""
 
     connected = bool(account.twilio_service_sid)
     webhook_url = ""
@@ -98,7 +99,7 @@ def index():
     callrail_account_name = ""
     if callrail_connected:
         try:
-            cr_accounts = fetch_callrail_accounts(account.callrail_api_key_encrypted)
+            cr_accounts = fetch_callrail_accounts(account.callrail_api_key)
             for cr_acct in cr_accounts:
                 if str(cr_acct["id"]) == str(account.callrail_account_id):
                     callrail_account_name = cr_acct["name"]
@@ -108,11 +109,16 @@ def index():
 
     masked_callrail_key = ""
     if account.callrail_api_key_encrypted:
-        masked_callrail_key = "••••" + account.callrail_api_key_encrypted[-4:]
+        decrypted_key = account.callrail_api_key
+        masked_callrail_key = "••••" + decrypted_key[-4:] if decrypted_key else ""
 
     callrail_webhook_url = ""
     if callrail_connected:
+        from flask import current_app
+        cr_secret = current_app.config.get("CALLRAIL_WEBHOOK_SECRET", "")
         callrail_webhook_url = url_for("webhooks.callrail_callback", _external=True)
+        if cr_secret:
+            callrail_webhook_url += f"?secret={cr_secret}"
 
     import pytz
     # Show common timezones: user's current tz first, then all pytz timezones
@@ -175,7 +181,7 @@ def save_callrail():
     was_first_connect = not account.callrail_account_id
 
     # If single account, save automatically; if multiple, use the first one
-    account.callrail_api_key_encrypted = api_key
+    account.callrail_api_key = api_key  # Encrypts via property setter
     account.callrail_account_id = str(accounts[0]["id"])
     db.session.commit()
 
@@ -207,7 +213,7 @@ def sync_calls():
     """Manually trigger a Twilio call sync."""
     account = current_user
 
-    if not account.twilio_account_sid or not account.twilio_auth_token_encrypted:
+    if not account.twilio_account_sid or not account.twilio_auth_token:
         flash("Please connect Twilio first.", "error")
         return redirect(url_for("settings.index"))
 

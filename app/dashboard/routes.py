@@ -307,7 +307,7 @@ def call_recording(call_id):
     if is_twilio:
         resp = http_requests.get(
             f"{call.recording_url}.mp3",
-            auth=(account.twilio_account_sid, account.twilio_auth_token_encrypted),
+            auth=(account.twilio_account_sid, account.twilio_auth_token),
             stream=True,
             timeout=30,
         )

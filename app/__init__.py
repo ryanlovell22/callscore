@@ -8,6 +8,8 @@ from flask import Flask, redirect, render_template, request, Response, abort, ur
 from flask_login import LoginManager, login_required, current_user
 from flask_migrate import Migrate
 
+from flask_wtf.csrf import CSRFProtect
+
 from .config import Config
 from .models import db, Account, Call
 from .extensions import limiter
@@ -16,6 +18,7 @@ login_manager = LoginManager()
 login_manager.login_view = "auth.login"
 migrate = Migrate()
 oauth = OAuth()
+csrf = CSRFProtect()
 
 
 @login_manager.user_loader
@@ -38,6 +41,7 @@ def create_app():
     migrate.init_app(app, db)
     limiter.init_app(app)
     oauth.init_app(app)
+    csrf.init_app(app)
 
     if app.config.get('GOOGLE_CLIENT_ID'):
         oauth.register(
@@ -86,6 +90,7 @@ def create_app():
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(lines_bp)
     app.register_blueprint(webhooks_bp)
+    csrf.exempt(webhooks_bp)  # Webhooks receive external POSTs without CSRF tokens
     app.register_blueprint(upload_bp)
     app.register_blueprint(partners_bp)
     app.register_blueprint(settings_bp)
@@ -151,6 +156,16 @@ def create_app():
     def terms():
         return render_template('legal/terms.html')
 
+    @app.after_request
+    def set_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        if request.is_secure or os.environ.get('RAILWAY_ENVIRONMENT'):
+            response.headers['Strict-Transport-Security'] = 'max-age=31536000'
+        return response
+
     @app.route('/health')
     def health_check():
         try:
@@ -158,7 +173,8 @@ def create_app():
             db.session.execute(text('SELECT 1'))
             return {'status': 'healthy'}, 200
         except Exception as e:
-            return {'status': 'unhealthy', 'error': str(e)}, 500
+            app.logger.error("Health check failed: %s", e)
+            return {'status': 'unhealthy'}, 500
 
     @app.route('/robots.txt')
     def robots_txt():

@@ -72,6 +72,27 @@ class Account(UserMixin, db.Model):
             return False
         return check_password_hash(self.password_hash, password)
 
+    # --- Encrypted credential properties ---
+    @property
+    def twilio_auth_token(self):
+        from .encryption import decrypt_value
+        return decrypt_value(self.twilio_auth_token_encrypted)
+
+    @twilio_auth_token.setter
+    def twilio_auth_token(self, value):
+        from .encryption import encrypt_value
+        self.twilio_auth_token_encrypted = encrypt_value(value)
+
+    @property
+    def callrail_api_key(self):
+        from .encryption import decrypt_value
+        return decrypt_value(self.callrail_api_key_encrypted)
+
+    @callrail_api_key.setter
+    def callrail_api_key(self, value):
+        from .encryption import encrypt_value
+        self.callrail_api_key_encrypted = encrypt_value(value)
+
     @property
     def at_usage_limit(self):
         """True if account has reached their plan's call processing limit."""

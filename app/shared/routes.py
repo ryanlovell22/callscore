@@ -10,6 +10,7 @@ from sqlalchemy import func, or_
 from werkzeug.security import check_password_hash
 
 from ..models import db, Call, SharedDashboard, Account, Partner, TrackingLine
+from ..extensions import limiter
 from . import bp
 
 logger = logging.getLogger(__name__)
@@ -387,6 +388,7 @@ def public_dashboard_export(share_token):
 
 
 @bp.route("/proof/<share_token>/auth", methods=["POST"])
+@limiter.limit("5/minute")
 def public_dashboard_auth(share_token):
     """Authenticate for a password-protected proof dashboard."""
     dashboard = SharedDashboard.query.filter_by(
@@ -444,6 +446,7 @@ def public_call_detail(share_token, call_id):
 
 
 @bp.route("/proof/<share_token>/calls/<int:call_id>/recording")
+@limiter.limit("30/minute")
 def public_call_recording(share_token, call_id):
     """Proxy recording audio for shared proof links."""
     dashboard = SharedDashboard.query.filter_by(
@@ -479,7 +482,7 @@ def public_call_recording(share_token, call_id):
     if is_twilio:
         resp = http_requests.get(
             f"{call.recording_url}.mp3",
-            auth=(account.twilio_account_sid, account.twilio_auth_token_encrypted),
+            auth=(account.twilio_account_sid, account.twilio_auth_token),
             stream=True,
             timeout=30,
         )

@@ -51,17 +51,17 @@ def google_callback():
             return redirect(url_for("onboarding.wizard"))
         return redirect(url_for("dashboard.index"))
 
-    # 2. Find by email (existing email/password user → link Google)
+    # 2. Find by email (existing email/password user)
+    # Block auto-linking to prevent account takeover via email squatting.
+    # User must log in with their password first, then link Google manually.
     account = Account.query.filter_by(email=email).first()
     if account:
-        account.google_id = google_id
-        account.auth_provider = "both"
-        db.session.commit()
-        login_user(account)
-        flash("Google account linked successfully.", "success")
-        if not account.onboarding_completed:
-            return redirect(url_for("onboarding.wizard"))
-        return redirect(url_for("dashboard.index"))
+        flash(
+            "An account with that email already exists. "
+            "Please log in with your password first.",
+            "error",
+        )
+        return redirect(url_for("auth.login"))
 
     # 3. New user — create account via Google
     is_admin = email in current_app.config.get("ADMIN_EMAILS", [])
@@ -109,6 +109,12 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             next_page = request.args.get("next")
+            # Prevent open redirect — only allow relative URLs
+            if next_page:
+                from urllib.parse import urlparse
+                parsed = urlparse(next_page)
+                if parsed.netloc or parsed.scheme:
+                    next_page = None
             if not next_page and hasattr(user, 'onboarding_completed') and not user.onboarding_completed:
                 return redirect(url_for("onboarding.wizard"))
             return redirect(next_page or url_for("dashboard.index"))
@@ -140,6 +146,10 @@ def signup():
 
         if len(password) < 8:
             flash("Password must be at least 8 characters.", "error")
+            return render_template("auth/signup.html", utm_data=post_utm)
+
+        if not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
+            flash("Password must contain at least one letter and one number.", "error")
             return render_template("auth/signup.html", utm_data=post_utm)
 
         if Account.query.filter_by(email=email).first():
@@ -214,8 +224,11 @@ def forgot_password():
                     """,
                 )
             else:
+                import hashlib as _hashlib
                 token = secrets.token_urlsafe(32)
-                account.password_reset_token = token
+                # Store hash of token in DB — raw token only sent via email
+                token_hash = _hashlib.sha256(token.encode()).hexdigest()
+                account.password_reset_token = token_hash
                 account.password_reset_expires = datetime.now(timezone.utc) + timedelta(hours=1)
                 db.session.commit()
 
@@ -243,7 +256,9 @@ def reset_password(token):
     if current_user.is_authenticated:
         return redirect(url_for("dashboard.index"))
 
-    account = Account.query.filter_by(password_reset_token=token).first()
+    import hashlib as _hashlib
+    token_hash = _hashlib.sha256(token.encode()).hexdigest()
+    account = Account.query.filter_by(password_reset_token=token_hash).first()
 
     if not account or not account.password_reset_expires:
         flash("Invalid or expired reset link.", "error")
@@ -262,6 +277,10 @@ def reset_password(token):
 
         if len(password) < 8:
             flash("Password must be at least 8 characters.", "error")
+            return render_template("auth/reset_password.html", token=token)
+
+        if not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
+            flash("Password must contain at least one letter and one number.", "error")
             return render_template("auth/reset_password.html", token=token)
 
         if password != confirm:

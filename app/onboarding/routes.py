@@ -49,7 +49,7 @@ def validate_twilio():
 
     account = db.session.get(Account, current_user.id)
     account.twilio_account_sid = sid
-    account.twilio_auth_token_encrypted = token
+    account.twilio_auth_token = token  # Encrypts via property setter
     account.call_source = "twilio"
 
     if not account.twilio_service_sid:
@@ -88,7 +88,7 @@ def validate_callrail():
         return jsonify({"error": "No CallRail accounts found for this API key."}), 400
 
     account = db.session.get(Account, current_user.id)
-    account.callrail_api_key_encrypted = api_key
+    account.callrail_api_key = api_key  # Encrypts via property setter
     account.callrail_account_id = str(accounts[0]["id"])
     account.call_source = "callrail"
     db.session.commit()

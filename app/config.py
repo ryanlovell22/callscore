@@ -45,5 +45,20 @@ class Config:
         if e.strip()
     ]
 
-    # Max upload size: 200MB (supports ~100 call recordings)
-    MAX_CONTENT_LENGTH = 200 * 1024 * 1024
+    # Session cookie security
+    SESSION_COOKIE_SECURE = os.environ.get("FLASK_ENV") != "development"
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    PERMANENT_SESSION_LIFETIME = 86400  # 24 hours
+
+    # Fernet encryption key for Twilio/CallRail credentials
+    FERNET_KEY = os.environ.get("FERNET_KEY")
+
+    # CallRail webhook shared secret
+    CALLRAIL_WEBHOOK_SECRET = os.environ.get("CALLRAIL_WEBHOOK_SECRET")
+
+    # Resend webhook signing secret
+    RESEND_WEBHOOK_SECRET = os.environ.get("RESEND_WEBHOOK_SECRET")
+
+    # Max upload size: 50MB
+    MAX_CONTENT_LENGTH = 50 * 1024 * 1024

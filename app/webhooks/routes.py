@@ -1,5 +1,8 @@
+import hashlib
+import hmac
 import json
 import logging
+import secrets
 from datetime import datetime, timezone
 
 from flask import request, jsonify, current_app
@@ -10,6 +13,91 @@ from ..ai_classifier import classify_transcript
 from . import bp
 
 logger = logging.getLogger(__name__)
+
+
+def _verify_twilio_signature():
+    """Verify the X-Twilio-Signature header using the Twilio request validator.
+
+    Uses the main TWILIO_AUTH_TOKEN from config (the bootstrap token).
+    Returns True if valid or if no auth token is configured (dev mode).
+    """
+    auth_token = current_app.config.get("TWILIO_AUTH_TOKEN")
+    if not auth_token:
+        return True  # Dev mode — no token configured
+
+    signature = request.headers.get("X-Twilio-Signature", "")
+    if not signature:
+        logger.warning("Missing X-Twilio-Signature header")
+        return False
+
+    try:
+        from twilio.request_validator import RequestValidator
+        validator = RequestValidator(auth_token)
+        # For JSON body, Twilio expects empty params dict and adds bodySHA256 to URL
+        url = request.url
+        if request.is_json:
+            return validator.validate(url, {}, signature)
+        else:
+            return validator.validate(url, request.form.to_dict(), signature)
+    except Exception as e:
+        logger.error("Twilio signature verification error: %s", e)
+        return False
+
+
+def _verify_callrail_secret():
+    """Verify the shared secret query parameter on CallRail webhooks."""
+    expected = current_app.config.get("CALLRAIL_WEBHOOK_SECRET")
+    if not expected:
+        return True  # No secret configured — dev mode
+    provided = request.args.get("secret", "")
+    return secrets.compare_digest(provided, expected)
+
+
+def _verify_resend_signature():
+    """Verify the svix-signature header on Resend inbound webhooks.
+
+    Uses HMAC-SHA256 with the Resend webhook signing secret.
+    """
+    webhook_secret = current_app.config.get("RESEND_WEBHOOK_SECRET")
+    if not webhook_secret:
+        return True  # No secret configured — dev mode
+
+    msg_id = request.headers.get("svix-id", "")
+    timestamp = request.headers.get("svix-timestamp", "")
+    signature = request.headers.get("svix-signature", "")
+
+    if not msg_id or not timestamp or not signature:
+        logger.warning("Missing Resend/Svix signature headers")
+        return False
+
+    # The secret may have a whsec_ prefix that needs stripping for the HMAC key
+    secret_key = webhook_secret
+    if secret_key.startswith("whsec_"):
+        secret_key = secret_key[6:]
+
+    import base64
+    try:
+        key_bytes = base64.b64decode(secret_key)
+    except Exception:
+        logger.error("Failed to decode Resend webhook secret")
+        return False
+
+    payload = request.get_data(as_text=True)
+    to_sign = f"{msg_id}.{timestamp}.{payload}"
+    expected_sig = base64.b64encode(
+        hmac.new(key_bytes, to_sign.encode(), hashlib.sha256).digest()
+    ).decode()
+
+    # svix-signature header may contain multiple signatures separated by spaces
+    # Each signature has a version prefix like "v1,"
+    for sig in signature.split(" "):
+        if sig.startswith("v1,"):
+            sig_value = sig[3:]
+            if hmac.compare_digest(sig_value, expected_sig):
+                return True
+
+    logger.warning("Resend webhook signature mismatch")
+    return False
 
 
 def _parse_booking_date(value):
@@ -33,6 +121,10 @@ def _increment_usage(account):
 def twilio_ci_callback():
     """Receive webhook from Twilio Conversational Intelligence when
     transcription and operator analysis is complete."""
+
+    if not _verify_twilio_signature():
+        logger.warning("Twilio CI webhook rejected: invalid signature")
+        return jsonify({"error": "Invalid signature"}), 403
 
     data = request.json or request.form.to_dict()
     logger.info("Twilio CI webhook received: %s", json.dumps(data, default=str))
@@ -62,7 +154,7 @@ def twilio_ci_callback():
         # Fetch operator results from Twilio
         operator_results = fetch_operator_results(
             account.twilio_account_sid,
-            account.twilio_auth_token_encrypted,
+            account.twilio_auth_token,
             transcript_sid,
         )
 
@@ -84,7 +176,7 @@ def twilio_ci_callback():
         # Fetch full transcript text
         transcript_text = fetch_transcript_text(
             account.twilio_account_sid,
-            account.twilio_auth_token_encrypted,
+            account.twilio_auth_token,
             transcript_sid,
         )
         if transcript_text:
@@ -100,17 +192,21 @@ def twilio_ci_callback():
         )
         return jsonify({"status": "ok"}), 200
 
-    except Exception as e:
+    except Exception:
         logger.exception("Error processing webhook for transcript %s", transcript_sid)
         call.status = "failed"
         db.session.commit()
         # Return 500 so Twilio retries on genuine errors
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Internal processing error"}), 500
 
 
 @bp.route("/callrail", methods=["POST"])
 def callrail_callback():
     """Receive post-call webhook from CallRail."""
+
+    if not _verify_callrail_secret():
+        logger.warning("CallRail webhook rejected: invalid secret")
+        return jsonify({"error": "Invalid secret"}), 403
 
     data = request.json or {}
     logger.info("CallRail webhook received: %s", json.dumps(data, default=str))
@@ -264,6 +360,11 @@ def callrail_callback():
 @bp.route("/resend-inbound", methods=["POST"])
 def resend_inbound():
     """Forward inbound emails from Resend to admin inbox."""
+
+    if not _verify_resend_signature():
+        logger.warning("Resend inbound webhook rejected: invalid signature")
+        return jsonify({"error": "Invalid signature"}), 403
+
     import resend as resend_sdk
 
     data = request.json or {}
@@ -327,9 +428,9 @@ def resend_inbound():
         logger.info("Forwarded inbound email from %s to %s", original_from, forward_to)
         return jsonify({"status": "forwarded"}), 200
 
-    except Exception as e:
-        logger.exception("Failed to forward inbound email %s: %s", email_id, e)
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        logger.exception("Failed to forward inbound email %s", email_id)
+        return jsonify({"error": "Internal processing error"}), 500
 
 
 @bp.route("/stripe", methods=["POST"])

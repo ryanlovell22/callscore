@@ -45,7 +45,7 @@ def _increment_usage(account):
 
 def poll_account(account, since):
     """Fetch new recordings for an account and classify via OpenAI."""
-    if not account.twilio_account_sid or not account.twilio_auth_token_encrypted:
+    if not account.twilio_account_sid or not account.twilio_auth_token:
         logger.info("Account %s: No Twilio credentials, skipping", account.id)
         return 0
 
@@ -55,7 +55,7 @@ def poll_account(account, since):
 
     recordings = fetch_recordings(
         account.twilio_account_sid,
-        account.twilio_auth_token_encrypted,
+        account.twilio_auth_token,
         date_after=since,
     )
 
@@ -81,7 +81,7 @@ def poll_account(account, since):
         try:
             call_details = get_call_details(
                 account.twilio_account_sid,
-                account.twilio_auth_token_encrypted,
+                account.twilio_auth_token,
                 call_sid,
             )
         except Exception as e:
@@ -145,7 +145,7 @@ def poll_account(account, since):
             try:
                 transcript_text = transcribe_recording(
                     recording_url + ".mp3",
-                    auth=(account.twilio_account_sid, account.twilio_auth_token_encrypted),
+                    auth=(account.twilio_account_sid, account.twilio_auth_token),
                 )
                 call.full_transcript = transcript_text
 
@@ -187,7 +187,7 @@ def poll_account(account, since):
 
 def poll_missed_calls(account, since):
     """Fetch missed calls (no-answer, busy, canceled) and create records."""
-    if not account.twilio_account_sid or not account.twilio_auth_token_encrypted:
+    if not account.twilio_account_sid or not account.twilio_auth_token:
         return 0
 
     logger.info(
@@ -196,7 +196,7 @@ def poll_missed_calls(account, since):
 
     missed_calls = fetch_calls(
         account.twilio_account_sid,
-        account.twilio_auth_token_encrypted,
+        account.twilio_auth_token,
         status_list=["no-answer", "busy", "canceled"],
         date_after=since,
     )
@@ -266,7 +266,7 @@ def poll_short_answered_calls(account, since):
     leg, but the Calls API returns the parent. So we dedup by caller number
     + time window, not just call SID.
     """
-    if not account.twilio_account_sid or not account.twilio_auth_token_encrypted:
+    if not account.twilio_account_sid or not account.twilio_auth_token:
         return 0
 
     logger.info(
@@ -276,7 +276,7 @@ def poll_short_answered_calls(account, since):
 
     completed_calls = fetch_calls(
         account.twilio_account_sid,
-        account.twilio_auth_token_encrypted,
+        account.twilio_auth_token,
         status_list=["completed"],
         date_after=since,
     )
@@ -355,7 +355,7 @@ def poll_short_answered_calls(account, since):
 
 def retry_failed_submissions(account):
     """Retry failed calls via OpenAI (up to 3 retries, Twilio calls only)."""
-    if not account.twilio_account_sid or not account.twilio_auth_token_encrypted:
+    if not account.twilio_account_sid or not account.twilio_auth_token:
         return 0
 
     if account.at_usage_limit:
@@ -376,7 +376,7 @@ def retry_failed_submissions(account):
         try:
             transcript_text = transcribe_recording(
                 call.recording_url + ".mp3",
-                auth=(account.twilio_account_sid, account.twilio_auth_token_encrypted),
+                auth=(account.twilio_account_sid, account.twilio_auth_token),
             )
             call.full_transcript = transcript_text
 
@@ -424,7 +424,7 @@ def run_callrail_backfill(account, days=7):
     """
     from .callrail_service import fetch_callrail_calls
 
-    if not account.callrail_api_key_encrypted or not account.callrail_account_id:
+    if not account.callrail_api_key or not account.callrail_account_id:
         logger.info("Account %s: No CallRail credentials, skipping backfill", account.id)
         return 0
 
@@ -436,7 +436,7 @@ def run_callrail_backfill(account, days=7):
 
     try:
         calls = fetch_callrail_calls(
-            account.callrail_api_key_encrypted,
+            account.callrail_api_key,
             account.callrail_account_id,
             date_after=since,
         )

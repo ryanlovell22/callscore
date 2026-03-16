@@ -27,9 +27,40 @@ def _parse_booking_date(value):
 
 ALLOWED_EXTENSIONS = {"wav", "mp3", "m4a", "ogg", "mp4"}
 
+# Magic byte signatures for audio file validation
+AUDIO_MAGIC_BYTES = {
+    "wav": [b"RIFF"],          # RIFF header
+    "mp3": [b"\xff\xfb", b"\xff\xf3", b"\xff\xf2", b"ID3"],  # MPEG sync word or ID3 tag
+    "m4a": [b"\x00\x00\x00"],  # ftyp box (variable size prefix)
+    "mp4": [b"\x00\x00\x00"],  # ftyp box
+    "ogg": [b"OggS"],          # Ogg container
+}
+
+# Per-file size limit (25MB)
+MAX_FILE_SIZE = 25 * 1024 * 1024
+
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def validate_audio_magic(file_obj, ext):
+    """Check if the first bytes match expected audio magic bytes for the extension."""
+    signatures = AUDIO_MAGIC_BYTES.get(ext, [])
+    if not signatures:
+        return True  # No signatures to check
+    pos = file_obj.tell()
+    header = file_obj.read(12)
+    file_obj.seek(pos)  # Reset position
+    if not header:
+        return False
+    for sig in signatures:
+        if header[:len(sig)] == sig:
+            return True
+    # Special case for m4a/mp4: check for 'ftyp' at offset 4
+    if ext in ("m4a", "mp4") and len(header) >= 8 and header[4:8] == b"ftyp":
+        return True
+    return False
 
 
 BATCH_SIZE = 10
@@ -144,13 +175,26 @@ def index():
                 skipped += 1
                 continue
 
+            # Per-file size check (25MB)
+            file.seek(0, 2)  # Seek to end
+            file_size = file.tell()
+            file.seek(0)  # Reset
+            if file_size > MAX_FILE_SIZE:
+                skipped += 1
+                continue
+
+            # Validate audio magic bytes
+            ext = file.filename.rsplit(".", 1)[1].lower()
+            if not validate_audio_magic(file, ext):
+                skipped += 1
+                continue
+
             # Check if we've hit the plan limit
             if remaining is not None and len(file_tasks) >= remaining:
                 limit_capped += 1
                 continue
 
             # Save file
-            ext = file.filename.rsplit(".", 1)[1].lower()
             temp_filename = f"{uuid.uuid4()}.{ext}"
             temp_path = os.path.join(upload_dir, temp_filename)
             file.save(temp_path)

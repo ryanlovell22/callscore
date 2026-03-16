@@ -21,13 +21,13 @@ def get_available_numbers(account, exclude_line_id=None):
 
     # Twilio numbers
     twilio_connected = bool(
-        account.twilio_account_sid and account.twilio_auth_token_encrypted
+        account.twilio_account_sid and account.twilio_auth_token
     )
     if twilio_connected:
         try:
             twilio_numbers = fetch_twilio_phone_numbers(
                 account.twilio_account_sid,
-                account.twilio_auth_token_encrypted,
+                account.twilio_auth_token,
             )
             for num in twilio_numbers:
                 available.append({
@@ -41,12 +41,12 @@ def get_available_numbers(account, exclude_line_id=None):
 
     # CallRail numbers
     callrail_connected = bool(
-        account.callrail_api_key_encrypted and account.callrail_account_id
+        account.callrail_api_key and account.callrail_account_id
     )
     if callrail_connected:
         try:
             trackers = fetch_callrail_trackers(
-                account.callrail_api_key_encrypted,
+                account.callrail_api_key,
                 account.callrail_account_id,
             )
             for t in trackers:
