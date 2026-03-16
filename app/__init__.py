@@ -51,16 +51,19 @@ def create_app():
     import pytz
 
     @app.template_filter('localtime')
-    def localtime_filter(value, fmt='%A, %-d %B %Y at %-I:%M %p'):
+    def localtime_filter(value, fmt='%A, %-d %B %Y at %-I:%M %p', tz=None):
         if value is None:
             return '\u2014'
         try:
-            from flask_login import current_user
-            tz_name = getattr(current_user, 'timezone', None) or 'Australia/Adelaide'
-            if current_user.user_type == 'partner':
-                account = db.session.get(Account, current_user.account_id)
-                tz_name = account.timezone if account else tz_name
-            local_tz = pytz.timezone(tz_name)
+            if tz:
+                local_tz = tz if hasattr(tz, 'localize') else pytz.timezone(tz)
+            else:
+                from flask_login import current_user
+                tz_name = getattr(current_user, 'timezone', None) or 'Australia/Adelaide'
+                if current_user.user_type == 'partner':
+                    account = db.session.get(Account, current_user.account_id)
+                    tz_name = account.timezone if account else tz_name
+                local_tz = pytz.timezone(tz_name)
         except Exception:
             local_tz = pytz.timezone('Australia/Adelaide')
         if value.tzinfo is None:
