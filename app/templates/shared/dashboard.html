@@ -43,13 +43,13 @@
     <main class="container">
         <!-- Date Filter Bar -->
         <div class="date-filter-bar">
-            <a href="/proof/{{ share_token }}{% if active_classification %}?classification={{ active_classification }}{% endif %}" class="{% if not active_period %}active{% endif %}">Default</a>
             <a href="/proof/{{ share_token }}?period=this_week{% if active_classification %}&classification={{ active_classification }}{% endif %}" class="{% if active_period == 'this_week' %}active{% endif %}">This Week</a>
             <a href="/proof/{{ share_token }}?period=last_week{% if active_classification %}&classification={{ active_classification }}{% endif %}" class="{% if active_period == 'last_week' %}active{% endif %}">Last Week</a>
+            <a href="/proof/{{ share_token }}?period=last_30{% if active_classification %}&classification={{ active_classification }}{% endif %}" class="{% if active_period == 'last_30' %}active{% endif %}">Last 30 Days</a>
             <div class="filter-separator"></div>
-            <a href="/proof/{{ share_token }}{% if active_period == 'this_week' %}?period=this_week{% elif active_period == 'last_week' %}?period=last_week{% elif active_period == 'custom' %}?date_from={{ qs_date_from }}&date_to={{ qs_date_to }}{% endif %}" class="{% if not active_classification %}active{% endif %}">All</a>
-            <a href="/proof/{{ share_token }}?classification=JOB_BOOKED{% if active_period == 'this_week' %}&period=this_week{% elif active_period == 'last_week' %}&period=last_week{% elif active_period == 'custom' %}&date_from={{ qs_date_from }}&date_to={{ qs_date_to }}{% endif %}" class="{% if active_classification == 'JOB_BOOKED' %}active{% endif %}">Booked</a>
-            <a href="/proof/{{ share_token }}?classification=NOT_BOOKED{% if active_period == 'this_week' %}&period=this_week{% elif active_period == 'last_week' %}&period=last_week{% elif active_period == 'custom' %}&date_from={{ qs_date_from }}&date_to={{ qs_date_to }}{% endif %}" class="{% if active_classification == 'NOT_BOOKED' %}active{% endif %}">Not Booked</a>
+            <a href="/proof/{{ share_token }}?period={{ active_period or 'this_week' }}" class="{% if not active_classification %}active{% endif %}">All</a>
+            <a href="/proof/{{ share_token }}?classification=JOB_BOOKED&period={{ active_period or 'this_week' }}{% if active_period == 'custom' %}&date_from={{ qs_date_from }}&date_to={{ qs_date_to }}{% endif %}" class="{% if active_classification == 'JOB_BOOKED' %}active{% endif %}">Booked</a>
+            <a href="/proof/{{ share_token }}?classification=NOT_BOOKED&period={{ active_period or 'this_week' }}{% if active_period == 'custom' %}&date_from={{ qs_date_from }}&date_to={{ qs_date_to }}{% endif %}" class="{% if active_classification == 'NOT_BOOKED' %}active{% endif %}">Not Booked</a>
             <form class="custom-dates" method="get" action="/proof/{{ share_token }}">
                 {% if active_classification %}<input type="hidden" name="classification" value="{{ active_classification }}">{% endif %}
                 <input type="date" name="date_from" value="{{ qs_date_from }}" required>

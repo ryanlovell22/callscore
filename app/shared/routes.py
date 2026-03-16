@@ -71,6 +71,12 @@ def public_dashboard(share_token):
         start_date = this_monday - timedelta(days=7)
         end_date = this_monday
         window_days = -1
+    elif period == "last_30":
+        # Last 30 days
+        active_period = "last_30"
+        start_date = today_local - timedelta(days=30)
+        end_date = today_local + timedelta(days=1)
+        window_days = -1
     elif qs_date_from and qs_date_to:
         # Custom date range from query string
         active_period = "custom"
@@ -204,6 +210,8 @@ def public_dashboard(share_token):
     elif active_period == "last_week":
         last_sun = end_date - timedelta(days=1)
         window_label = f"Last week ({start_date.strftime('%d %b')} — {last_sun.strftime('%d %b %Y')})"
+    elif active_period == "last_30":
+        window_label = f"Last 30 days ({start_date.strftime('%d %b')} — {today_local.strftime('%d %b %Y')})"
     elif active_period == "custom":
         actual_end = end_date - timedelta(days=1)
         window_label = f"{start_date.strftime('%d %b %Y')} — {actual_end.strftime('%d %b %Y')}"
@@ -311,6 +319,10 @@ def public_dashboard_export(share_token):
         this_monday = today_local - timedelta(days=today_local.weekday())
         start_date = this_monday - timedelta(days=7)
         end_date = this_monday
+        window_days = -1
+    elif period == "last_30":
+        start_date = today_local - timedelta(days=30)
+        end_date = today_local + timedelta(days=1)
         window_days = -1
     elif qs_date_from and qs_date_to:
         try:
