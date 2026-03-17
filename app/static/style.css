@@ -1,5 +1,21 @@
 /* CallOutcome — minimal custom styles */
 
+/* ── Mobile nav: wrap links instead of overflowing viewport ── */
+@media (max-width: 576px) {
+    header.container nav {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    header.container nav ul {
+        flex-wrap: wrap;
+        gap: 0.15rem 0.5rem;
+        padding: 0;
+    }
+    header.container nav ul li {
+        font-size: 0.85rem;
+    }
+}
+
 /* Stats hero — donut + chip grid */
 .stats-hero {
     padding: 1.5rem;
