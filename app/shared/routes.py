@@ -134,6 +134,7 @@ def public_dashboard(share_token):
     ).count()
     answered = booked + not_booked
     rate = round(booked / answered * 100, 1) if answered > 0 else 0
+    missed_rate = round(missed / total * 100, 1) if total > 0 else 0
 
     # Lead value: per-booking + per-call + per-voicemail + per-qualified-call + weekly minimums
     booking_value = db.session.query(
@@ -250,7 +251,7 @@ def public_dashboard(share_token):
         pagination=pagination,
         stats={
             "total": total, "booked": booked, "not_booked": not_booked,
-            "missed": missed, "rate": rate, "total_value": total_value,
+            "missed": missed, "rate": rate, "missed_rate": missed_rate, "total_value": total_value,
             "booking_value": float(booking_value), "call_value": float(call_value),
             "voicemail_value": float(voicemail_value), "qualified_value": float(qualified_value),
             "weekly_min_value": float(weekly_min_value),

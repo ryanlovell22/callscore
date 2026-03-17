@@ -115,6 +115,7 @@ def index():
     # Conversion rate: booked out of answered+analysed calls (excludes missed/pending)
     answered = booked + not_booked
     rate = round(booked / answered * 100, 1) if answered > 0 else 0
+    missed_rate = round(missed / total * 100, 1) if total > 0 else 0
 
     # Lead value: per-booking + per-call + per-voicemail + per-qualified-call + weekly minimums
     booking_value = db.session.query(
@@ -230,6 +231,7 @@ def index():
             "not_booked": not_booked,
             "pending": pending,
             "rate": rate,
+            "missed_rate": missed_rate,
             "total_value": total_value,
             "missed": missed,
             "booking_value": float(booking_value),

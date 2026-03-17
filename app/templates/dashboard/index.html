@@ -62,9 +62,13 @@
                 <span class="chip-val" data-count="{{ stats.missed }}" style="color: #ffa94d;">{{ stats.missed }}</span>
                 <span class="chip-lbl">Missed</span>
             </div>
-            <div class="stat-chip chip-full" style="border-left-color: #b197fc;">
+            <div class="stat-chip" style="border-left-color: #b197fc;">
                 <span class="chip-val" data-count="{{ stats.rate }}" data-suffix="%" style="color: #b197fc;">{{ stats.rate }}%</span>
                 <span class="chip-lbl">Conversion</span>
+            </div>
+            <div class="stat-chip" style="border-left-color: #ffa94d;">
+                <span class="chip-val" data-count="{{ stats.missed_rate }}" data-suffix="%" style="color: #ffa94d;">{{ stats.missed_rate }}%</span>
+                <span class="chip-lbl">Missed</span>
             </div>
             <div class="stat-chip chip-full chip-highlight" style="border-left-color: #63e6be; position: relative;">
                 <span class="chip-val" data-count="{{ stats.total_value }}" data-prefix="$" data-decimals="2" style="color: #63e6be;">${{ "%.2f"|format(stats.total_value) }}</span>
