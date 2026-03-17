@@ -105,8 +105,55 @@
             </div>
         </article>
 
-        <!-- Calls table -->
+        <!-- Calls -->
         {% if calls %}
+
+        <!-- Mobile card layout -->
+        <div class="mobile-cards">
+            {% for call in calls %}
+            <a href="/proof/{{ share_token }}/calls/{{ call.id }}" class="call-card {% if call.call_outcome == 'missed' %}call-card-missed{% elif call.classification == 'JOB_BOOKED' %}call-card-booked{% elif call.classification == 'NOT_BOOKED' %}call-card-not-booked{% endif %}">
+                <div class="call-card-header">
+                    <span class="call-card-date">{{ call.call_date|localtime('%-d %b %-I:%M %p', tz=local_tz) }}</span>
+                    {% if call.call_outcome == 'missed' %}
+                        <mark class="badge-missed">Missed</mark>
+                    {% elif call.classification == 'JOB_BOOKED' %}
+                        <mark class="badge-booked">Booked</mark>
+                    {% elif call.classification == 'NOT_BOOKED' %}
+                        <mark class="badge-not-booked">Not Booked</mark>
+                    {% elif call.classification == 'VOICEMAIL' %}
+                        <mark class="badge-voicemail">Voicemail</mark>
+                    {% else %}
+                        <mark>{{ call.status | capitalize }}</mark>
+                    {% endif %}
+                </div>
+                <div class="call-card-body">
+                    <div>
+                        <div class="call-card-label">Caller</div>
+                        <div class="call-card-val">{{ call.caller_number or '—' }}</div>
+                    </div>
+                    <div>
+                        <div class="call-card-label">Customer</div>
+                        <div class="call-card-val">{{ call.customer_name or '—' }}</div>
+                    </div>
+                    {% if dashboard.tracking_lines | length > 1 %}
+                    <div>
+                        <div class="call-card-label">Line</div>
+                        <div class="call-card-val">{{ call.tracking_line.label if call.tracking_line else '—' }}</div>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <div class="call-card-label">Duration</div>
+                        <div class="call-card-val">{{ '%d:%02d'|format(call.call_duration // 60, call.call_duration % 60) if call.call_duration else '—' }}</div>
+                    </div>
+                    {% if call.summary %}
+                    <div class="call-card-summary">{{ call.summary[:80] }}</div>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- Desktop table -->
         <div class="table-scroll">
         <figure>
             <table role="grid">
