@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @bp.route("/proof/<share_token>")
 def public_dashboard(share_token):
-    """Public proof dashboard — no login required."""
+    """Public shared dashboard — no login required."""
     dashboard = SharedDashboard.query.filter_by(
         share_token=share_token, active=True
     ).first_or_404()
@@ -268,7 +268,7 @@ def public_dashboard(share_token):
 
 @bp.route("/proof/<share_token>/export")
 def public_dashboard_export(share_token):
-    """CSV export for shared proof dashboard."""
+    """CSV export for shared dashboard."""
     dashboard = SharedDashboard.query.filter_by(
         share_token=share_token, active=True
     ).first_or_404()
@@ -410,7 +410,7 @@ def public_dashboard_export(share_token):
 @bp.route("/proof/<share_token>/auth", methods=["POST"])
 @limiter.limit("5/minute")
 def public_dashboard_auth(share_token):
-    """Authenticate for a password-protected proof dashboard."""
+    """Authenticate for a password-protected shared dashboard."""
     dashboard = SharedDashboard.query.filter_by(
         share_token=share_token, active=True
     ).first_or_404()
@@ -468,7 +468,7 @@ def public_call_detail(share_token, call_id):
 @bp.route("/proof/<share_token>/calls/<int:call_id>/recording")
 @limiter.limit("30/minute")
 def public_call_recording(share_token, call_id):
-    """Proxy recording audio for shared proof links."""
+    """Proxy recording audio for shared dashboard links."""
     dashboard = SharedDashboard.query.filter_by(
         share_token=share_token, active=True
     ).first_or_404()

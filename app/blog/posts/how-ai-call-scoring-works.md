@@ -176,7 +176,7 @@ Here is what affects accuracy in practice:
 
 ### Manual override
 
-For the small percentage of calls where the AI gets it wrong, you can override the classification with a single click. The override is reflected immediately in all reports and proof dashboards.
+For the small percentage of calls where the AI gets it wrong, you can override the classification with a single click. The override is reflected immediately in all reports and shared dashboards.
 
 In practice, most operators find they override fewer than 5% of classifications — and half of those are edge cases where the outcome was genuinely ambiguous.
 

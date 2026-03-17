@@ -108,9 +108,9 @@ Make sure your recordings comply with Australian privacy laws. In most states, y
 
 Rather than building your own classification system, use a purpose-built tool. [CallOutcome](/welcome) connects directly to CallRail and Twilio, automatically pulling recordings and scoring them. Setup takes under 5 minutes.
 
-### Step 4: Set up your proof dashboard
+### Step 4: Set up your shared dashboard
 
-Once calls are being scored, you need a way to share results with your clients. A [proof dashboard](/blog/how-to-prove-lead-quality-to-clients) shows:
+Once calls are being scored, you need a way to share results with your clients. A [shared dashboard](/blog/how-to-prove-lead-quality-to-clients) shows:
 
 - Total calls received
 - How many booked a job

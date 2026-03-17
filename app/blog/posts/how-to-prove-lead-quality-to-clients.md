@@ -58,7 +58,7 @@ Transcripts are faster to review than recordings. Your client can scan through a
 
 **The problem:** Transcripts still require manual review. Someone has to read each one and decide: was this a real lead? Did a job get booked? That someone is usually you, the operator, which brings you back to the time problem.
 
-### Level 3: AI Call Scoring with Proof Dashboard
+### Level 3: AI Call Scoring with Shared Dashboard
 
 This is the approach that actually scales. [AI reads the transcript](/blog/how-ai-call-scoring-works) of every call and classifies the outcome: Job Booked, Not Booked, Voicemail, or Spam. Your client sees a dashboard showing:
 
@@ -89,7 +89,7 @@ There are two approaches to sharing proof:
 
 **Partner logins:** Create a view-only login for your client so they can access their call data anytime. They see the calls assigned to their tracking lines, with classifications and transcripts. They cannot modify anything — just view.
 
-**Share links:** Generate a link to a proof dashboard that your client can access without logging in. You can password-protect these links if needed. Send the link with your monthly invoice so your client can review every call before paying.
+**Share links:** Generate a link to a shared dashboard that your client can access without logging in. You can password-protect these links if needed. Send the link with your monthly invoice so your client can review every call before paying.
 
 ### Step 4: Invoice with confidence
 
@@ -125,7 +125,7 @@ AI scoring gives you the data to have this conversation constructively instead o
 
 ### When a client will not look at the dashboard
 
-If a client refuses to look at your proof dashboard but keeps disputing invoices, that tells you something. They are not disputing quality — they are trying to avoid paying. You have done your part by making the data available. At that point, it is a relationship problem, not a data problem.
+If a client refuses to look at your shared dashboard but keeps disputing invoices, that tells you something. They are not disputing quality — they are trying to avoid paying. You have done your part by making the data available. At that point, it is a relationship problem, not a data problem.
 
 ## What Good Proof Looks Like
 
@@ -178,7 +178,7 @@ If you are currently billing based on call duration and dealing with regular dis
 1. Make sure call recording is enabled in your call tracking platform
 2. Connect [CallOutcome](/welcome) to your CallRail or Twilio account (takes under 5 minutes)
 3. Let the AI score your first batch of calls
-4. Share the proof dashboard with your client alongside your next invoice
+4. Share the shared dashboard with your client alongside your next invoice
 
 The free plan scores 50 calls per month — enough to see the difference it makes before scaling up.
 

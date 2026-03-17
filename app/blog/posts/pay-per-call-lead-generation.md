@@ -34,7 +34,7 @@ Simple in theory. The complexity is in the details — particularly steps 4 and 
 
 I run 3 appliance repair pay per call sites in Toowoomba, Queensland. Between them, they generate about 30 calls a week to two tradie partners. The pricing is $50 per booked job and $12.50 per missed call. That works out to roughly $400 per week across the three sites.
 
-The key to making this sustainable is transparency. Both my partners can see a proof dashboard showing every call, its transcript, and whether a job was booked. There are no arguments about how many leads I sent because the data is sitting right in front of them. For how to set that up, see [how to prove lead quality to clients](/blog/how-to-prove-lead-quality-to-clients).
+The key to making this sustainable is transparency. Both my partners can see a shared dashboard showing every call, its transcript, and whether a job was booked. There are no arguments about how many leads I sent because the data is sitting right in front of them. For how to set that up, see [how to prove lead quality to clients](/blog/how-to-prove-lead-quality-to-clients).
 
 I also run a hot tub repair site in Spokane, Washington — same model, different market. The consistency of the approach across countries shows this is not a fluke. Pay per call works wherever customers pick up the phone.
 
@@ -133,7 +133,7 @@ Whichever model you choose, you need [call-level proof](/blog/how-to-prove-lead-
 
 ### 6. Share proof and invoice
 
-Send your partner a link to their proof dashboard alongside every invoice. Let them see every call, transcript, and classification. Transparency is what makes the relationship last.
+Send your partner a link to their shared dashboard alongside every invoice. Let them see every call, transcript, and classification. Transparency is what makes the relationship last.
 
 ## Common Pay Per Call Mistakes
 

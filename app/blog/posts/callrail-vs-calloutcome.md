@@ -40,7 +40,7 @@ CallOutcome is an AI call scoring platform built specifically for lead gen opera
 
 - **AI call classification:** Every call is automatically classified as Job Booked, Not Booked, Voicemail, or Spam based on full transcript analysis.
 - **Full transcripts:** Read what was said on every call without listening to recordings.
-- **Proof dashboards:** Share a live dashboard with your clients showing scored calls, transcripts, and booking rates. Settles billing disputes instantly.
+- **Shared dashboards:** Share a live dashboard with your clients showing scored calls, transcripts, and booking rates. Settles billing disputes instantly.
 - **Partner logins:** Create view-only accounts for your clients so they can see their call data.
 - **Manual override:** If the AI gets one wrong, override the classification with a click.
 - **CallRail and Twilio integration:** Connects directly to your existing call tracking platform. No need to change your phone setup.
@@ -64,7 +64,7 @@ Think of it this way: CallRail answers "where did this call come from?" CallOutc
 | Call transcription | Add-on | Included |
 | AI call classification | Basic (keyword rules) | Advanced (full context analysis) |
 | Booking detection | No | Yes — Job Booked / Not Booked |
-| Proof dashboard for clients | No | Yes |
+| Shared dashboard for clients | No | Yes |
 | Partner/client logins | No | Yes |
 | Billing dispute resolution | No | Yes |
 | CSV export | Yes | Yes |
@@ -109,7 +109,7 @@ The most common setup for lead gen operators is CallRail (for tracking) plus Cal
 2. CallRail records the calls and logs the source data
 3. CallOutcome picks up the recording, transcribes it, and scores it
 4. You check your CallOutcome dashboard to see booking results
-5. At the end of the month, you share the proof dashboard with your client and invoice accordingly
+5. At the end of the month, you share the dashboard with your client and invoice accordingly
 
 ### What each tool handles
 
@@ -137,7 +137,7 @@ Additional costs for extra numbers and minutes beyond your plan limits.
 
 ### Real cost comparison for a lead gen operator
 
-I run 3 appliance repair sites in Toowoomba plus a hot tub repair site in Spokane. Across those, I handle about 30 calls per week per market. CallRail's Conversation Intelligence add-on would cost me $100-195/month on top of my tracking plan just for basic keyword-matching classification. CallOutcome's Starter plan handles all my calls at $29/month with full AI context analysis, proof dashboards, and partner logins. For [tracking conversions properly](/blog/how-to-track-call-conversions-for-lead-gen), the cost difference is significant.
+I run 3 appliance repair sites in Toowoomba plus a hot tub repair site in Spokane. Across those, I handle about 30 calls per week per market. CallRail's Conversation Intelligence add-on would cost me $100-195/month on top of my tracking plan just for basic keyword-matching classification. CallOutcome's Starter plan handles all my calls at $29/month with full AI context analysis, shared dashboards, and partner logins. For [tracking conversions properly](/blog/how-to-track-call-conversions-for-lead-gen), the cost difference is significant.
 
 ### Total cost for a typical lead gen operator
 
@@ -158,7 +158,7 @@ For basic use cases, possibly. If you just want transcripts and simple keyword a
 But for lead gen billing specifically, CallRail CI has limitations:
 
 - **No purpose-built booking detection.** You would need to set up keyword rules manually, and these miss contextual nuance.
-- **No proof dashboard for clients.** CallRail does not have a client-facing view designed for lead gen billing.
+- **No shared dashboard for clients.** CallRail does not have a client-facing view designed for lead gen billing.
 - **No partner logins.** You cannot give your clients a view-only login to see their calls.
 - **Rule-based vs AI-based.** CallRail CI uses keyword matching. CallOutcome uses full-context AI analysis that understands conversational intent.
 

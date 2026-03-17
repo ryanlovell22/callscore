@@ -117,7 +117,9 @@ def _process_uploads(file_tasks, account_id, app):
 
                 # Increment plan usage
                 account = db.session.get(Account, account_id)
-                if account and account.plan_calls_used is not None:
+                if account:
+                    if account.plan_calls_used is None:
+                        account.plan_calls_used = 0
                     account.plan_calls_used += 1
 
                 db.session.commit()

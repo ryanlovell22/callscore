@@ -45,4 +45,4 @@ def decrypt_value(ciphertext):
         return f.decrypt(ciphertext.encode()).decode()
     except (InvalidToken, Exception) as e:
         logger.error("Failed to decrypt value: %s", e)
-        raise
+        return None

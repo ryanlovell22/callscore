@@ -117,7 +117,7 @@ If you are looking for a CallRail alternative specifically because you want bett
 
 AI call analysis that actually understands conversational context (not just keyword matching) is a different product category from call tracking. The platforms that do this well:
 
-**CallOutcome** — Built specifically for lead gen operators. Connects to your existing CallRail or Twilio account, pulls recordings, transcribes them, and classifies each call as Job Booked, Not Booked, Voicemail, or Spam. Full context analysis, not keyword rules. Includes proof dashboards for sharing with clients. Pricing starts at free (50 calls/month). I built this because I needed it for my own pay per call operation. For the full story, see [how AI call scoring works](/blog/how-ai-call-scoring-works).
+**CallOutcome** — Built specifically for lead gen operators. Connects to your existing CallRail or Twilio account, pulls recordings, transcribes them, and classifies each call as Job Booked, Not Booked, Voicemail, or Spam. Full context analysis, not keyword rules. Includes shared dashboards for partners. Pricing starts at free (50 calls/month). I built this because I needed it for my own pay per call operation. For the full story, see [how AI call scoring works](/blog/how-ai-call-scoring-works).
 
 **CallRail Conversation Intelligence** — Good for basic keyword spotting and call summaries. Falls short on contextual booking detection. Adds $50-100/month to your CallRail plan.
 
@@ -136,7 +136,7 @@ Here is how the best call tracking software options compare for lead gen operato
 | AI transcription | Add-on | Add-on | Included | Included | No | Included |
 | AI call classification | Keyword-based | Keyword-based | AI-based | Basic | No | Full context AI |
 | Booking detection | No | No | Enterprise only | No | No | Yes |
-| Proof dashboard for clients | No | No | No | No | No | Yes |
+| Shared dashboard for clients | No | No | No | No | No | Yes |
 | Partner/client logins | No | No | No | No | No | Yes |
 | Self-serve signup | Yes | Yes | No | No | Yes | Yes |
 | Entry price | ~$45/mo | ~$39/mo | ~$1,000/mo | Custom | ~$1/mo + usage | Free |

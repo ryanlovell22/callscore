@@ -37,6 +37,13 @@ def _parse_booking_date(value):
     except (ValueError, TypeError):
         return None
 
+
+def _increment_usage(account):
+    """Increment the account's usage counter."""
+    if account.plan_calls_used is None:
+        account.plan_calls_used = 0
+    account.plan_calls_used += 1
+
 # Default lookback: 24 hours (covers cron gaps, Railway restarts, etc.)
 # The dedup logic prevents double-processing.
 DEFAULT_LOOKBACK_HOURS = 24
@@ -98,6 +105,7 @@ def process_pending_recordings(account):
             if call.classification == "VOICEMAIL":
                 call.call_outcome = "voicemail"
 
+            _increment_usage(account)
             logger.info(
                 "Call %s classified: %s", call.id, call.classification
             )
@@ -113,7 +121,7 @@ def process_pending_recordings(account):
 
 def backfill_callrail_calls(account, since):
     """Fetch recent calls from CallRail API and create records for any missing ones."""
-    if not account.callrail_api_key_encrypted or not account.callrail_account_id:
+    if not account.callrail_api_key or not account.callrail_account_id:
         logger.info("Account %s: No CallRail credentials, skipping backfill", account.id)
         return 0
 
@@ -123,7 +131,7 @@ def backfill_callrail_calls(account, since):
     )
 
     calls_data = fetch_callrail_calls(
-        account.callrail_api_key_encrypted,
+        account.callrail_api_key,
         account.callrail_account_id,
         date_after=since,
     )
@@ -240,6 +248,7 @@ def backfill_callrail_calls(account, since):
                 if call.classification == "VOICEMAIL":
                     call.call_outcome = "voicemail"
 
+                _increment_usage(account)
                 logger.info(
                     "Backfill call %s classified: %s", call_id, call.classification
                 )
@@ -301,6 +310,7 @@ def retry_failed_callrail(account):
             if call.classification == "VOICEMAIL":
                 call.call_outcome = "voicemail"
 
+            _increment_usage(account)
             logger.info(
                 "Retry %d succeeded for call %s: %s",
                 call.retry_count, call.id, call.classification,
@@ -350,6 +360,7 @@ def main():
                 if count:
                     logger.info("Account %s: %d new CallRail calls", account.id, count)
             except Exception as e:
+                db.session.rollback()
                 logger.exception("Error backfilling account %s: %s", account.id, e)
 
             try:
@@ -358,6 +369,7 @@ def main():
                 if processed:
                     logger.info("Account %s: %d recordings processed", account.id, processed)
             except Exception as e:
+                db.session.rollback()
                 logger.exception("Error processing recordings for account %s: %s", account.id, e)
 
             try:
@@ -366,6 +378,7 @@ def main():
                 if retried:
                     logger.info("Account %s: retried %d failed calls", account.id, retried)
             except Exception as e:
+                db.session.rollback()
                 logger.exception("Error retrying failed calls for account %s: %s", account.id, e)
 
         logger.info(

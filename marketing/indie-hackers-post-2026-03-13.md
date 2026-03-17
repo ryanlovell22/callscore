@@ -12,7 +12,7 @@ The business model works. The problem I ran into wasn't getting leads — it was
 
 This doesn't scale. At 10 calls a week it's fine. At 50-100 it's a second job. And I had 15+ more niches planned.
 
-**What I built:** [CallOutcome](https://calloutcome.com) — it connects to your existing call tracking (CallRail or Twilio), pulls every recording, transcribes it with OpenAI Whisper, and classifies the outcome using GPT: job booked, not booked, or voicemail. The whole pipeline runs automatically. I just check the dashboard.
+**What I built:** [CallOutcome](https://calloutcome.com?utm_source=indiehackers&utm_medium=organic&utm_campaign=launch_2026_03) — it connects to your existing call tracking (CallRail or Twilio — takes about 2 minutes to connect), pulls every recording, transcribes it with OpenAI Whisper, and classifies the outcome using GPT: job booked, not booked, or voicemail. The whole pipeline runs automatically. I just check the dashboard.
 
 It also extracts the customer name, service type, urgency, and booking date from each call. And there are shareable "proof dashboards" I can send to partners — they can see exactly which calls booked jobs without needing a login.
 

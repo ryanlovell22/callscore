@@ -40,7 +40,7 @@ Twilio's pay-as-you-go model becomes cheaper at scale. Phone numbers cost about 
 
 ### If you work with a lead gen partner
 
-Ask them what platform they use. A good lead gen partner handles all the call tracking infrastructure for you — they own the tracking numbers, record the calls, and report the results. Your job is to answer the phone and book the work. If they use [CallOutcome](/welcome) for scoring, they can share a proof dashboard with you directly so you can see every call and its outcome.
+Ask them what platform they use. A good lead gen partner handles all the call tracking infrastructure for you — they own the tracking numbers, record the calls, and report the results. Your job is to answer the phone and book the work. If they use [CallOutcome](/welcome) for scoring, they can share a dashboard with you directly so you can see every call and its outcome.
 
 ## Best Call Tracking Software for Contractors
 
@@ -160,7 +160,7 @@ If someone is generating leads for you (sending you calls from their websites), 
 - Which calls resulted in booked jobs
 - Full transcripts or recordings as proof
 
-If your lead gen partner uses [CallOutcome](/welcome), they can share a proof dashboard with you directly — no login required. You can see every call, its classification, and the transcript.
+If your lead gen partner uses [CallOutcome](/welcome), they can share a dashboard with you directly — no login required. You can see every call, its classification, and the transcript.
 
 ## Common Call Tracking Mistakes
 

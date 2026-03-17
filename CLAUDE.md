@@ -30,9 +30,10 @@ cd /Users/ryanlovell/Desktop/Vibe\ Coding\ Ideas/calloutcome
 - **Framework:** Flask + Jinja2 (server-rendered)
 - **Database:** PostgreSQL on Supabase (via SQLAlchemy + Flask-Migrate)
 - **Auth:** Flask-Login (session-based, `account:ID` / `partner:ID` prefixed IDs)
+- **Security:** Flask-WTF (CSRF), Fernet encryption (credentials at rest via `app/encryption.py`), webhook signature verification (Twilio/CallRail/Resend), session cookie hardening, security headers
 - **AI:** OpenAI Whisper (transcription) + GPT-4o-mini (classification) — ~$0.03-0.04/call
 - **Billing:** Stripe Checkout + Customer Portal
-- **Email:** Resend (transactional, `noreply@calloutcome.com`)
+- **Email:** Resend (transactional send from `noreply@calloutcome.com` + inbound forwarding `*@calloutcome.com` → `admin@lovelldigitalproperties.com`)
 - **CSS:** Pico CSS (classless, CDN, dark mode)
 - **Deploy:** Railway (web via gunicorn + cron-poll service)
 
@@ -45,6 +46,7 @@ cd /Users/ryanlovell/Desktop/Vibe\ Coding\ Ideas/calloutcome
 3. **Classification** — `app/ai_classifier.py:classify_transcript()` sends transcript to GPT-4o-mini with structured JSON output. Returns: classification (JOB_BOOKED/NOT_BOOKED/VOICEMAIL), confidence, summary, service_type, urgency, customer details, booking date
 4. **Manual upload** — Users can upload audio files via `/upload`, processed through same AI pipeline
 5. **CallRail** — Alternative to Twilio; uses CallRail API for call ingestion (`app/callrail_service.py`)
+6. **Inbound email** — Resend webhook at `/webhooks/resend-inbound` receives `email.received` events, fetches full content, and forwards to admin@lovelldigitalproperties.com
 
 ### Multi-Tenancy
 
@@ -59,7 +61,7 @@ The app factory (`app/__init__.py:create_app()`) registers 11 blueprints: auth, 
 
 ### Key Models (`app/models.py`)
 
-- **Account** — tenant, Twilio/CallRail credentials (encrypted), Stripe billing fields, usage tracking
+- **Account** — tenant, Twilio/CallRail credentials (Fernet-encrypted via properties `twilio_auth_token`/`callrail_api_key`), Stripe billing fields, usage tracking
 - **Partner** — view-only user with flexible pricing (per-lead, per-call, per-voicemail, weekly minimum)
 - **TrackingLine** — phone number (Twilio or CallRail) linked to account + optional partner
 - **Call** — recording metadata, transcript, AI classification, booking details. Deduped via unique constraints on `(account_id, twilio_call_sid)`, `(account_id, twilio_recording_sid)`, `(account_id, callrail_call_id)`
@@ -71,7 +73,7 @@ Stripe Checkout + Customer Portal. Tiers: Free (50 calls), Starter ($29/100), Pr
 
 ## Environment Variables
 
-All credentials in `~/.claude/credentials.env`. Key vars: `DATABASE_URL`, `SECRET_KEY`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `OPENAI_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_STARTER/PRO/AGENCY`, `RESEND_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`.
+All credentials in `~/.claude/credentials.env`. Key vars: `DATABASE_URL`, `SECRET_KEY`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `OPENAI_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_STARTER/PRO/AGENCY`, `RESEND_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`, `FERNET_KEY`, `CALLRAIL_WEBHOOK_SECRET`, `RESEND_WEBHOOK_SECRET`.
 
 ## Deploy
 
