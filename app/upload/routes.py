@@ -10,6 +10,7 @@ from flask_login import login_required, current_user
 
 from ..models import db, Account, Call, TrackingLine
 from ..ai_classifier import classify_transcript
+from ..duplicate_detection import mark_if_duplicate_booking
 from . import bp
 
 logger = logging.getLogger(__name__)
@@ -114,6 +115,8 @@ def _process_uploads(file_tasks, account_id, app):
 
                 if call.classification == "VOICEMAIL":
                     call.call_outcome = "voicemail"
+
+                mark_if_duplicate_booking(call)
 
                 # Increment plan usage
                 account = db.session.get(Account, account_id)

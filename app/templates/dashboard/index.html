@@ -155,6 +155,7 @@
                 <mark class="badge-missed">Missed</mark>
             {% elif call.classification == 'JOB_BOOKED' %}
                 <mark class="badge-booked">Booked</mark>
+                {% if call.is_duplicate_booking %}<mark class="badge-duplicate" title="Same caller already booked this partner in the last 90 days. Excluded from billing.">Duplicate</mark>{% endif %}
             {% elif call.classification == 'VOICEMAIL' %}
                 <mark class="badge-voicemail">Voicemail</mark>
             {% elif call.classification == 'NOT_BOOKED' %}
@@ -226,6 +227,7 @@
                         <mark class="badge-missed">Missed</mark>
                     {% elif call.classification == 'JOB_BOOKED' %}
                         <mark class="badge-booked">Booked</mark>
+                        {% if call.is_duplicate_booking %}<mark class="badge-duplicate" title="Same caller already booked this partner in the last 90 days. Excluded from billing.">Duplicate</mark>{% endif %}
                     {% elif call.classification == 'VOICEMAIL' %}
                         <mark class="badge-voicemail">Voicemail</mark>
                     {% elif call.classification == 'NOT_BOOKED' %}

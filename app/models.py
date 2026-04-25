@@ -193,6 +193,9 @@ class Call(db.Model):
     customer_address = db.Column(db.Text)
     booking_time = db.Column(db.String(255))
     booking_date = db.Column(db.DateTime, nullable=True)
+
+    is_duplicate_booking = db.Column(db.Boolean, default=False, nullable=False, index=True)
+
     created_at = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc)
     )

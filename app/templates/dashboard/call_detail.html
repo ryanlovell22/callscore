@@ -27,6 +27,7 @@
                 <td>
                     {% if call.classification == 'JOB_BOOKED' %}
                         <mark class="badge-booked">Booked</mark>
+                        {% if call.is_duplicate_booking %}<mark class="badge-duplicate" title="Same caller already booked this partner within the last 90 days. Excluded from billing.">Duplicate</mark>{% endif %}
                     {% elif call.classification == 'NOT_BOOKED' %}
                         <mark class="badge-not-booked">Not Booked</mark>
                     {% else %}
@@ -34,6 +35,9 @@
                     {% endif %}
                 </td>
             </tr>
+            {% if call.is_duplicate_booking %}
+            <tr><td><strong>Duplicate</strong></td><td style="color: #adb5bd;">This caller already booked this partner in the last 90 days — not counted toward booking totals or billing.</td></tr>
+            {% endif %}
             {% if call.confidence %}
             <tr><td><strong>Confidence</strong></td><td>{{ "%.0f"|format(call.confidence * 100) }}%</td></tr>
             {% endif %}

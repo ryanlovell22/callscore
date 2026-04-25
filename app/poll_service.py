@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 from .models import db, Account, Call, TrackingLine
 from .twilio_service import fetch_recordings, fetch_calls, get_call_details
 from .ai_classifier import transcribe_recording, classify_transcript
+from .duplicate_detection import mark_if_duplicate_booking
 
 logger = logging.getLogger(__name__)
 
@@ -174,6 +175,8 @@ def poll_account(account, since):
 
                     if call.classification == "VOICEMAIL":
                         call.call_outcome = "voicemail"
+
+                    mark_if_duplicate_booking(call)
 
                     _increment_usage(account)
                     logger.info(
@@ -412,6 +415,8 @@ def retry_failed_submissions(account):
             if call.classification == "VOICEMAIL":
                 call.call_outcome = "voicemail"
 
+            mark_if_duplicate_booking(call)
+
             _increment_usage(account)
             logger.info(
                 "Retry %d succeeded for call %s: %s",
@@ -575,6 +580,8 @@ def run_callrail_backfill(account, days=7):
 
                 if call.classification == "VOICEMAIL":
                     call.call_outcome = "voicemail"
+
+                mark_if_duplicate_booking(call)
             except Exception as e:
                 logger.exception(
                     "Failed to classify CallRail call %s: %s", call_id, e

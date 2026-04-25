@@ -46,6 +46,7 @@
                             <mark class="badge-missed">Missed</mark>
                             {% elif call.classification == 'JOB_BOOKED' %}
                             <mark class="badge-booked">Booked</mark>
+                            {% if call.is_duplicate_booking %}<mark class="badge-duplicate" title="Same caller already booked within the last 90 days. Not billable.">Duplicate</mark>{% endif %}
                             {% elif call.classification == 'NOT_BOOKED' %}
                             <mark class="badge-not-booked">Not Booked</mark>
                             {% elif call.classification == 'VOICEMAIL' %}
@@ -58,6 +59,9 @@
                             {% endif %}
                         </td>
                     </tr>
+                    {% if call.is_duplicate_booking %}
+                    <tr><td><strong>Duplicate</strong></td><td style="color: var(--pico-muted-color);">This caller already booked within the last 90 days — not billable.</td></tr>
+                    {% endif %}
                     {% if call.booking_time %}
                     <tr><td><strong>Booking Time</strong></td><td>{{ call.booking_time }}</td></tr>
                     {% endif %}

@@ -124,7 +124,14 @@ def public_dashboard(share_token):
 
     # Stats (computed before classification filter so totals reflect all calls)
     total = query.count()
-    booked = query.filter(Call.classification == "JOB_BOOKED").count()
+    booked = query.filter(
+        Call.classification == "JOB_BOOKED",
+        Call.is_duplicate_booking.is_(False),
+    ).count()
+    duplicate_bookings = query.filter(
+        Call.classification == "JOB_BOOKED",
+        Call.is_duplicate_booking.is_(True),
+    ).count()
     not_booked = query.filter(Call.classification == "NOT_BOOKED").count()
     missed = query.filter(
         or_(
@@ -137,11 +144,15 @@ def public_dashboard(share_token):
     missed_rate = round(missed / total * 100, 1) if total > 0 else 0
 
     # Lead value: per-booking + per-call + per-voicemail + per-qualified-call + weekly minimums
+    # Duplicate bookings (same caller, same partner, within 90 days) are excluded.
     booking_value = db.session.query(
         func.coalesce(func.sum(Partner.cost_per_lead), 0)
     ).join(TrackingLine, TrackingLine.partner_id == Partner.id
     ).join(Call, Call.tracking_line_id == TrackingLine.id).filter(
-        Call.id.in_(query.filter(Call.classification == "JOB_BOOKED").with_entities(Call.id))
+        Call.id.in_(query.filter(
+            Call.classification == "JOB_BOOKED",
+            Call.is_duplicate_booking.is_(False),
+        ).with_entities(Call.id))
     ).scalar()
 
     call_value = db.session.query(
@@ -250,7 +261,8 @@ def public_dashboard(share_token):
         calls=calls,
         pagination=pagination,
         stats={
-            "total": total, "booked": booked, "not_booked": not_booked,
+            "total": total, "booked": booked, "duplicate_bookings": duplicate_bookings,
+            "not_booked": not_booked,
             "missed": missed, "rate": rate, "missed_rate": missed_rate, "total_value": total_value,
             "booking_value": float(booking_value), "call_value": float(call_value),
             "voicemail_value": float(voicemail_value), "qualified_value": float(qualified_value),
@@ -365,7 +377,7 @@ def public_dashboard_export(share_token):
     # Build CSV
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["Date", "Line", "Caller", "Customer", "Duration", "Classification", "Booking Time", "Summary"])
+    writer.writerow(["Date", "Line", "Caller", "Customer", "Duration", "Classification", "Duplicate Booking", "Booking Time", "Summary"])
 
     for call in calls:
         # Convert date to local timezone
@@ -396,6 +408,7 @@ def public_dashboard_export(share_token):
             call.customer_name or "",
             duration,
             cls,
+            "Yes" if call.is_duplicate_booking else "",
             call.booking_time or "",
             call.summary or "",
         ])

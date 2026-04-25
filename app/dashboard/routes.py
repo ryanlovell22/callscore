@@ -9,6 +9,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify, R
 from flask_login import login_required, current_user
 
 from ..models import db, Call, TrackingLine, Account, Partner
+from ..duplicate_detection import mark_if_duplicate_booking
 from . import bp
 
 
@@ -103,7 +104,14 @@ def index():
     # Stats via DB aggregates (on the full filtered query, including missed)
     from sqlalchemy import or_
     total = query.count()
-    booked = query.filter(Call.classification == "JOB_BOOKED").count()
+    booked = query.filter(
+        Call.classification == "JOB_BOOKED",
+        Call.is_duplicate_booking.is_(False),
+    ).count()
+    duplicate_bookings = query.filter(
+        Call.classification == "JOB_BOOKED",
+        Call.is_duplicate_booking.is_(True),
+    ).count()
     not_booked = query.filter(Call.classification == "NOT_BOOKED").count()
     missed = query.filter(
         or_(
@@ -118,11 +126,15 @@ def index():
     missed_rate = round(missed / total * 100, 1) if total > 0 else 0
 
     # Lead value: per-booking + per-call + per-voicemail + per-qualified-call + weekly minimums
+    # Duplicate bookings (same caller booking same partner within 90 days) are excluded.
     booking_value = db.session.query(
         func.coalesce(func.sum(Partner.cost_per_lead), 0)
     ).join(TrackingLine, TrackingLine.partner_id == Partner.id
     ).join(Call, Call.tracking_line_id == TrackingLine.id).filter(
-        Call.id.in_(query.filter(Call.classification == "JOB_BOOKED").with_entities(Call.id))
+        Call.id.in_(query.filter(
+            Call.classification == "JOB_BOOKED",
+            Call.is_duplicate_booking.is_(False),
+        ).with_entities(Call.id))
     ).scalar()
 
     call_value = db.session.query(
@@ -228,6 +240,7 @@ def index():
         stats={
             "total": total,
             "booked": booked,
+            "duplicate_bookings": duplicate_bookings,
             "not_booked": not_booked,
             "pending": pending,
             "rate": rate,
@@ -277,6 +290,7 @@ def override_classification(call_id):
     new_classification = request.form.get("classification")
     if new_classification in ("JOB_BOOKED", "NOT_BOOKED"):
         call.classification = new_classification
+        mark_if_duplicate_booking(call)
         db.session.commit()
         flash("Classification updated.", "success")
 
@@ -463,7 +477,7 @@ def export_csv():
     # Build CSV
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["Date", "Line", "Partner", "Caller", "Customer", "Duration", "Classification", "Booking Time", "Summary"])
+    writer.writerow(["Date", "Line", "Partner", "Caller", "Customer", "Duration", "Classification", "Duplicate Booking", "Booking Time", "Summary"])
     for call in calls:
         writer.writerow([
             _local_date(call.call_date),
@@ -473,6 +487,7 @@ def export_csv():
             call.customer_name or '',
             f"{call.call_duration // 60}:{call.call_duration % 60:02d}" if call.call_duration else '',
             'Missed' if call.call_outcome == 'missed' else (call.classification or call.status),
+            'Yes' if call.is_duplicate_booking else '',
             call.booking_time or '',
             call.summary or '',
         ])
