@@ -63,12 +63,11 @@ def mark_if_duplicate_booking(call):
 
     q = (
         Call.query
-        .join(TrackingLine, Call.tracking_line_id == TrackingLine.id)
         .filter(
             Call.account_id == call.account_id,
             Call.classification == 'JOB_BOOKED',
             Call.is_duplicate_booking.is_(False),
-            TrackingLine.partner_id == line.partner_id,
+            Call.partner_id == line.partner_id,
             Call.call_date.isnot(None),
             Call.call_date >= window_start,
             Call.call_date < reference_date,

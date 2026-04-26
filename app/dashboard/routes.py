@@ -66,13 +66,12 @@ def index():
     if not date_to:
         date_to = today_local.strftime("%Y-%m-%d")
 
-    # Partners see only their assigned lines; accounts see everything
+    # Partners see only their attributed calls; accounts see everything
     if current_user.user_type == "partner":
         account_id = current_user.account_id
-        partner_line_ids = [l.id for l in current_user.tracking_lines]
         query = Call.query.filter(
             Call.account_id == account_id,
-            Call.tracking_line_id.in_(partner_line_ids)
+            Call.partner_id == current_user.id,
         )
     else:
         account_id = current_user.id
@@ -80,12 +79,7 @@ def index():
 
     # Apply user filters to the base query
     if partner_id:
-        partner_line_ids_filter = [
-            l.id for l in TrackingLine.query.filter_by(
-                account_id=account_id, partner_id=partner_id, active=True
-            ).all()
-        ]
-        query = query.filter(Call.tracking_line_id.in_(partner_line_ids_filter))
+        query = query.filter(Call.partner_id == partner_id)
     if line_id:
         query = query.filter_by(tracking_line_id=line_id)
     if classification and classification in ("JOB_BOOKED", "NOT_BOOKED"):
@@ -129,8 +123,7 @@ def index():
     # Duplicate bookings (same caller booking same partner within 90 days) are excluded.
     booking_value = db.session.query(
         func.coalesce(func.sum(Partner.cost_per_lead), 0)
-    ).join(TrackingLine, TrackingLine.partner_id == Partner.id
-    ).join(Call, Call.tracking_line_id == TrackingLine.id).filter(
+    ).join(Call, Call.partner_id == Partner.id).filter(
         Call.id.in_(query.filter(
             Call.classification == "JOB_BOOKED",
             Call.is_duplicate_booking.is_(False),
@@ -139,8 +132,7 @@ def index():
 
     call_value = db.session.query(
         func.coalesce(func.sum(Partner.cost_per_call), 0)
-    ).join(TrackingLine, TrackingLine.partner_id == Partner.id
-    ).join(Call, Call.tracking_line_id == TrackingLine.id).filter(
+    ).join(Call, Call.partner_id == Partner.id).filter(
         Call.id.in_(query.filter(
             Call.call_outcome == "answered",
             Call.status == "completed",
@@ -149,15 +141,13 @@ def index():
 
     voicemail_value = db.session.query(
         func.coalesce(func.sum(Partner.cost_per_voicemail), 0)
-    ).join(TrackingLine, TrackingLine.partner_id == Partner.id
-    ).join(Call, Call.tracking_line_id == TrackingLine.id).filter(
+    ).join(Call, Call.partner_id == Partner.id).filter(
         Call.id.in_(query.filter(Call.classification == "VOICEMAIL").with_entities(Call.id))
     ).scalar()
 
     qualified_value = db.session.query(
         func.coalesce(func.sum(Partner.cost_per_qualified_call), 0)
-    ).join(TrackingLine, TrackingLine.partner_id == Partner.id
-    ).join(Call, Call.tracking_line_id == TrackingLine.id).filter(
+    ).join(Call, Call.partner_id == Partner.id).filter(
         Call.id.in_(query.filter(
             Call.call_outcome == "answered",
             Call.status == "completed",
@@ -177,9 +167,7 @@ def index():
         Partner.weekly_minimum_fee > 0,
     ).all()
     for p in partners_with_min:
-        partner_calls = query.join(
-            TrackingLine, Call.tracking_line_id == TrackingLine.id
-        ).filter(TrackingLine.partner_id == p.id)
+        partner_calls = query.filter(Call.partner_id == p.id)
         local_call_date = func.timezone(tz_name, func.timezone('UTC', Call.call_date))
         week_count = db.session.query(
             func.count(func.distinct(func.date_trunc('week', local_call_date)))
@@ -262,11 +250,10 @@ def index():
 @login_required
 def call_detail(call_id):
     if current_user.user_type == "partner":
-        partner_line_ids = [l.id for l in current_user.tracking_lines]
         call = Call.query.filter(
             Call.id == call_id,
             Call.account_id == current_user.account_id,
-            Call.tracking_line_id.in_(partner_line_ids)
+            Call.partner_id == current_user.id,
         ).first_or_404()
     else:
         call = Call.query.filter_by(
@@ -302,11 +289,10 @@ def override_classification(call_id):
 def call_recording(call_id):
     """Proxy the Twilio recording so users don't need Twilio credentials."""
     if current_user.user_type == "partner":
-        partner_line_ids = [l.id for l in current_user.tracking_lines]
         call = Call.query.filter(
             Call.id == call_id,
             Call.account_id == current_user.account_id,
-            Call.tracking_line_id.in_(partner_line_ids)
+            Call.partner_id == current_user.id,
         ).first_or_404()
         account = db.session.get(Account, current_user.account_id)
     else:
@@ -422,22 +408,16 @@ def export_csv():
     # Build query (same logic as index)
     if current_user.user_type == "partner":
         account_id = current_user.account_id
-        partner_line_ids = [l.id for l in current_user.tracking_lines]
         query = Call.query.filter(
             Call.account_id == account_id,
-            Call.tracking_line_id.in_(partner_line_ids)
+            Call.partner_id == current_user.id,
         )
     else:
         account_id = current_user.id
         query = Call.query.filter_by(account_id=account_id)
 
     if partner_id:
-        partner_line_ids_filter = [
-            l.id for l in TrackingLine.query.filter_by(
-                account_id=account_id, partner_id=partner_id, active=True
-            ).all()
-        ]
-        query = query.filter(Call.tracking_line_id.in_(partner_line_ids_filter))
+        query = query.filter(Call.partner_id == partner_id)
     if line_id:
         query = query.filter_by(tracking_line_id=line_id)
     if classification and classification in ("JOB_BOOKED", "NOT_BOOKED"):

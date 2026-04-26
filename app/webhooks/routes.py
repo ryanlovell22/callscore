@@ -271,6 +271,7 @@ def callrail_callback():
         call = Call(
             account_id=account.id,
             tracking_line_id=tracking_line.id,
+            partner_id=tracking_line.partner_id,
             callrail_call_id=str(call_id),
             caller_number=customer_phone,
             call_duration=duration,
@@ -293,6 +294,7 @@ def callrail_callback():
         call = Call(
             account_id=account.id,
             tracking_line_id=tracking_line.id,
+            partner_id=tracking_line.partner_id,
             callrail_call_id=str(call_id),
             caller_number=customer_phone,
             call_duration=duration,
@@ -310,6 +312,7 @@ def callrail_callback():
     call = Call(
         account_id=account.id,
         tracking_line_id=tracking_line.id,
+        partner_id=tracking_line.partner_id,
         callrail_call_id=str(call_id),
         caller_number=customer_phone,
         call_duration=duration,

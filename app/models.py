@@ -167,6 +167,10 @@ class Call(db.Model):
     tracking_line_id = db.Column(
         db.Integer, db.ForeignKey("tracking_lines.id"), nullable=True
     )
+    partner_id = db.Column(
+        db.Integer, db.ForeignKey("partners.id", ondelete="SET NULL"),
+        nullable=True, index=True
+    )
     twilio_call_sid = db.Column(db.String(255))
     twilio_recording_sid = db.Column(db.String(255))
     caller_number = db.Column(db.String(20))

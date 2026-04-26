@@ -29,13 +29,11 @@ def public_dashboard(share_token):
         if not session.get(session_key):
             return render_template("shared/password.html", share_token=share_token)
 
-    # Build call query scoped to the shared link's tracking lines
-    query = Call.query.filter_by(account_id=dashboard.account_id)
-    line_ids = [l.id for l in dashboard.tracking_lines]
-    if line_ids:
-        query = query.filter(Call.tracking_line_id.in_(line_ids))
-    else:
-        query = query.filter(False)
+    # Build call query scoped to the shared link's partner
+    query = Call.query.filter(
+        Call.account_id == dashboard.account_id,
+        Call.partner_id == dashboard.partner_id,
+    )
 
     # Timezone setup
     try:
@@ -151,8 +149,7 @@ def public_dashboard(share_token):
     # Duplicate bookings (same caller, same partner, within 90 days) are excluded.
     booking_value = db.session.query(
         func.coalesce(func.sum(Partner.cost_per_lead), 0)
-    ).join(TrackingLine, TrackingLine.partner_id == Partner.id
-    ).join(Call, Call.tracking_line_id == TrackingLine.id).filter(
+    ).join(Call, Call.partner_id == Partner.id).filter(
         Call.id.in_(query.filter(
             Call.classification == "JOB_BOOKED",
             Call.is_duplicate_booking.is_(False),
@@ -161,8 +158,7 @@ def public_dashboard(share_token):
 
     call_value = db.session.query(
         func.coalesce(func.sum(Partner.cost_per_call), 0)
-    ).join(TrackingLine, TrackingLine.partner_id == Partner.id
-    ).join(Call, Call.tracking_line_id == TrackingLine.id).filter(
+    ).join(Call, Call.partner_id == Partner.id).filter(
         Call.id.in_(query.filter(
             Call.call_outcome == "answered",
             Call.status == "completed",
@@ -171,15 +167,13 @@ def public_dashboard(share_token):
 
     voicemail_value = db.session.query(
         func.coalesce(func.sum(Partner.cost_per_voicemail), 0)
-    ).join(TrackingLine, TrackingLine.partner_id == Partner.id
-    ).join(Call, Call.tracking_line_id == TrackingLine.id).filter(
+    ).join(Call, Call.partner_id == Partner.id).filter(
         Call.id.in_(query.filter(Call.classification == "VOICEMAIL").with_entities(Call.id))
     ).scalar()
 
     qualified_value = db.session.query(
         func.coalesce(func.sum(Partner.cost_per_qualified_call), 0)
-    ).join(TrackingLine, TrackingLine.partner_id == Partner.id
-    ).join(Call, Call.tracking_line_id == TrackingLine.id).filter(
+    ).join(Call, Call.partner_id == Partner.id).filter(
         Call.id.in_(query.filter(
             Call.call_outcome == "answered",
             Call.status == "completed",
@@ -195,9 +189,7 @@ def public_dashboard(share_token):
         Partner.weekly_minimum_fee > 0,
     ).all()
     for p in partners_with_min:
-        partner_calls = query.join(
-            TrackingLine, Call.tracking_line_id == TrackingLine.id
-        ).filter(TrackingLine.partner_id == p.id)
+        partner_calls = query.filter(Call.partner_id == p.id)
         week_count = db.session.query(
             func.count(func.distinct(func.date_trunc('week', Call.call_date)))
         ).filter(
@@ -296,13 +288,11 @@ def public_dashboard_export(share_token):
         if not session.get(session_key):
             return redirect(url_for("shared.public_dashboard", share_token=share_token))
 
-    # Build call query scoped to the shared link's tracking lines
-    query = Call.query.filter_by(account_id=dashboard.account_id)
-    line_ids = [l.id for l in dashboard.tracking_lines]
-    if line_ids:
-        query = query.filter(Call.tracking_line_id.in_(line_ids))
-    else:
-        query = query.filter(False)
+    # Build call query scoped to the shared link's partner
+    query = Call.query.filter(
+        Call.account_id == dashboard.account_id,
+        Call.partner_id == dashboard.partner_id,
+    )
 
     # Timezone setup
     try:
@@ -466,8 +456,7 @@ def public_call_detail(share_token, call_id):
     ).first_or_404()
 
     # Verify call belongs to dashboard scope
-    shared_line_ids = [l.id for l in dashboard.tracking_lines]
-    if call.tracking_line_id not in shared_line_ids:
+    if call.partner_id != dashboard.partner_id:
         abort(404)
 
     # Timezone for display
@@ -508,8 +497,7 @@ def public_call_recording(share_token, call_id):
     ).first_or_404()
 
     # Verify call belongs to dashboard scope
-    shared_line_ids = [l.id for l in dashboard.tracking_lines]
-    if call.tracking_line_id not in shared_line_ids:
+    if call.partner_id != dashboard.partner_id:
         abort(404)
 
     if not call.recording_url:

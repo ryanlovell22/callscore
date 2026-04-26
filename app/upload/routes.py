@@ -167,6 +167,9 @@ def index():
         upload_dir = os.path.join(current_app.instance_path, "uploads")
         os.makedirs(upload_dir, exist_ok=True)
         line_id = request.form.get("tracking_line_id", type=int)
+        tracking_line = TrackingLine.query.filter_by(
+            id=line_id, account_id=current_user.id
+        ).first() if line_id else None
 
         file_tasks = []
         skipped = 0
@@ -207,7 +210,8 @@ def index():
             # Create call record
             call = Call(
                 account_id=current_user.id,
-                tracking_line_id=line_id if line_id else None,
+                tracking_line_id=tracking_line.id if tracking_line else None,
+                partner_id=tracking_line.partner_id if tracking_line else None,
                 caller_number="Upload",
                 call_date=datetime.now(timezone.utc),
                 source="upload",

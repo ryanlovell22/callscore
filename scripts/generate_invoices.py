@@ -55,24 +55,15 @@ def to_utc(local_date, local_tz, end_of_day=False):
     return local_dt.astimezone(pytz.utc)
 
 
-def get_call_stats(partner, account_id, dt_start_utc, dt_end_utc, dashboard=None):
+def get_call_stats(partner, account_id, dt_start_utc, dt_end_utc):
     """Return call stats dict for a partner over the given UTC date range.
 
-    Uses the shared dashboard's tracking lines when available — these are what
-    the proof link shows, so the invoice should match them exactly.
-    Falls back to the partner's own assigned tracking lines.
+    Uses the snapshotted partner_id on each call so that line reassignments
+    don't retroactively change which calls count toward each partner.
     """
-    if dashboard and dashboard.tracking_lines:
-        line_ids = [l.id for l in dashboard.tracking_lines]
-    else:
-        line_ids = [l.id for l in partner.tracking_lines]
-    if not line_ids:
-        return dict(calls=[], booked=0, not_booked=0, missed=0, answered=0, total=0,
-                    conversion_pct=0, missed_pct=0)
-
     calls = Call.query.filter(
         Call.account_id == account_id,
-        Call.tracking_line_id.in_(line_ids),
+        Call.partner_id == partner.id,
         Call.call_date >= dt_start_utc,
         Call.call_date < dt_end_utc,
     ).all()
@@ -176,7 +167,7 @@ def generate_invoice_for_partner(partner, account, period_start, period_end, dry
         active=True,
     ).first()
 
-    stats = get_call_stats(partner, account.id, dt_start_utc, dt_end_utc, dashboard=dashboard)
+    stats = get_call_stats(partner, account.id, dt_start_utc, dt_end_utc)
     qty, unit_price, line_desc, amount = calculate_amount(partner, stats)
 
     dashboard_url = None
