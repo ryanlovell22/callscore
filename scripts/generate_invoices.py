@@ -69,8 +69,8 @@ def get_call_stats(partner, account_id, dt_start_utc, dt_end_utc):
     ).all()
 
     booked = sum(1 for c in calls if c.classification == 'JOB_BOOKED')
-    not_booked = sum(1 for c in calls if c.call_outcome == 'answered' and c.classification != 'JOB_BOOKED')
-    missed = sum(1 for c in calls if c.call_outcome == 'missed')
+    not_booked = sum(1 for c in calls if c.classification == 'NOT_BOOKED')
+    missed = sum(1 for c in calls if c.call_outcome in ('missed', 'voicemail') or c.classification == 'VOICEMAIL')
     answered = booked + not_booked
     total = answered + missed
 
